@@ -1,13 +1,16 @@
 const { Pool } = require('pg');
-
 const dotenv = require('dotenv');
 
 dotenv.config();
+
 console.log('Full DATABASE_URL:', process.env.DATABASE_URL);
 console.log('DATABASE_URL length:', process.env.DATABASE_URL ? process.env.DATABASE_URL.length : 'undefined');
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false  // This allows self-signed certificates
+  }
 });
 
 async function query(sql, params) {
