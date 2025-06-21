@@ -1,6 +1,6 @@
 // server/services/recurringTransactionService.js
 
-const { query } = require('/home/user/expense-tracker/server/utils/db');
+const { query } = require('../utils/db');
 
 const getAllRecurringTransactions = async () => {
   const sql = 'SELECT * FROM recurring_transactions';

@@ -148,10 +148,7 @@ const forgotPassword = async (email) => {
   }
 };
 
-// Function to handle reset password request
-const resetPassword = async (token, newPassword) => {
-  try {
-    // Find the token in user_tokens and check its validity
+// Function to change a user's password
 const changePassword = async (userId, oldPassword, newPassword) => {
   try {
     // Retrieve the user from the database
@@ -183,6 +180,15 @@ const changePassword = async (userId, oldPassword, newPassword) => {
   }
 };
 
+// Function to handle reset password request
+const resetPassword = async (token, newPassword) => {
+  try {
+    // NOTE: Assuming the token passed here is the plain token from the email link.
+    // We need to compare it with the hashed token in the database.
+
+    // Find the token in user_tokens that matches the provided token hash,
+    // is for password reset, active, and not expired. We join with users
+    // to get the user_id directly from the token entry.
     // NOTE: Assuming the token passed here is the plain token from the email link.
     // We need to compare it with the hashed token in the database.
     const findTokenSql = 'SELECT ut.*, u.user_id FROM user_tokens ut JOIN users u ON ut.user_id = u.user_id WHERE ut.token_type = \'password_reset\' AND ut.is_active = true AND ut.expires_at > NOW()';
@@ -201,6 +207,14 @@ const changePassword = async (userId, oldPassword, newPassword) => {
       throw new Error('Invalid, expired, or used reset token.');
     }
 
+    // Retrieve the user associated with the valid token
+    const userSql = 'SELECT user_id FROM users WHERE user_id = $1';
+    const { rows: userRows } = await query(userSql, [validTokenEntry.user_id]);
+    const user = userRows[0];
+
+    if (!user) {
+        throw new Error('User not found for this reset token.');
+    }
     // Hash the new password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
@@ -214,9 +228,9 @@ const changePassword = async (userId, oldPassword, newPassword) => {
     await query(invalidateTokenSql, [validTokenEntry.token_id]);
 
   } catch (error) {
-    console.error('Error in resetPassword service:', error);
-
-
+    throw error;
+  }
+}
 // Function to save refresh token in the database
 const saveRefreshToken = async (userId, refreshToken) => {
   try {

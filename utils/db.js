@@ -1,12 +1,11 @@
-import {
-  Pool
-} from 'pg';
+const { Pool } = require('pg');
 
-import dotenv from 'dotenv';
+const dotenv = require('dotenv');
+
 dotenv.config();
 
 const pool = new Pool({
-  connectionString: process.env.DB_CONNECTION_STRING,
+  connectionString: process.env.DATABASE_URL
 });
 
 async function query(sql, params) {
@@ -19,7 +18,6 @@ async function query(sql, params) {
     }
 }
 
-export {
-  pool,
-  query
+module.exports = {
+    pool, query
 };

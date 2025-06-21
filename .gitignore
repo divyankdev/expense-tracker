@@ -1,7 +1,6 @@
-/.vscode
-/ai
-/app
-/components
-/contexts
-/hooks
-/lib
+gitignore
+# dependencies
+/node_modules
+
+# environment variables
+.env

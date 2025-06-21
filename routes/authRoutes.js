@@ -30,7 +30,7 @@ router.get('/google/callback',
   });
 
 // Password management routes
-router.put('/change-password', authMiddleware, authController.changePassword); // Add change-password route
+// router.put('/change-password', authMiddleware, authController.changePassword); // Add change-password route
 
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);

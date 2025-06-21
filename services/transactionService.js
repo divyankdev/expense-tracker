@@ -1,6 +1,6 @@
-// server/services/transactionService.js
+// /home/user/expense-tracker/services/transactionService.js
 
-const { query } = require('/home/user/expense-tracker/server/utils/db');
+const { query } = require('../utils/db');
 
 const getAllTransactions = async () => {
   const sql = 'SELECT * FROM transactions';

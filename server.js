@@ -1,27 +1,23 @@
 const express = require('express');
-const { Pool } = require('pg');
 const app = express();
 const passport = require('passport');
-const configurePassport = require('/home/user/expense-tracker/server/config/passport');
+const configurePassport = require('./config/passport');
+const { query } = require('./utils/db'); // Import the query function
 const port = 3000;
 
 // Import route files
-const accountRoutes = require('/home/user/expense-tracker/server/routes/accountRoutes');
-const attachmentRoutes = require('/home/user/expense-tracker/server/routes/attachmentRoutes');
-const budgetRoutes = require('/home/user/expense-tracker/server/routes/budgetRoutes');
-const categoryRoutes = require('/home/user/expense-tracker/server/routes/categoryRoutes');
-const recurringTransactionRoutes = require('/home/user/expense-tracker/server/routes/recurringTransactionRoutes');
-const transactionRoutes = require('/home/user/expense-tracker/server/routes/transactionRoutes');
-const authRoutes = require('/home/user/expense-tracker/server/routes/authRoutes');
+const accountRoutes = require('./routes/accountRoutes');
+const attachmentRoutes = require('./routes/attachmentRoutes');
+const budgetRoutes = require('./routes/budgetRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const recurringTransactionRoutes = require('./routes/recurringTransactionRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 // Database connection pool
-const pool = new Pool({
-  connectionString: 'postgresql://postgres:divyank@db.hayevayhownxgbjkpsop.supabase.co:5432/postgres',
-});
-
 async function testDbConnection() {
   try {
-    await pool.query('SELECT 1');
+    await query('SELECT 1'); // Use the imported query function
     console.log('Database connection successful!');
   } catch (err) {
     console.error('Database connection error:', err);
@@ -31,7 +27,6 @@ async function testDbConnection() {
 // Passport configuration
 configurePassport(passport);
 app.use(passport.initialize());
-app.use(passport.session()); // Passport session middleware (useful even if not strictly using sessions for API)
 
 // Use routes
 app.use('/api/accounts', accountRoutes);

@@ -34,15 +34,11 @@ const attachmentController = {
     }
   }),
 
-  deleteAttachment: async (req, res, next) => {
-    try {
-      const attachmentId = req.params.id;
-      await attachmentService.deleteAttachment(attachmentId);
-      res.status(204).end();
-    } catch (error) {
-      next(error);
-    }
-  },
+  deleteAttachment: asyncHandler(async (req, res) => {
+    const attachmentId = req.params.id;
+    await attachmentService.deleteAttachment(attachmentId);
+    res.status(204).end();
+  }),
 };
 
 module.exports = attachmentController;

@@ -1,6 +1,6 @@
-// server/services/accountService.js
+// services/accountService.js
 
-const pool = require('../db'); // Assuming you have your db connection pool set up in a file named db.js in the server directory
+const { query } = require('../utils/db'); // Import the query function from db.js
 
 const accountService = {
   /**
@@ -9,9 +9,10 @@ const accountService = {
    */
   async getAllAccounts() {
     try {
-      // Placeholder: Implement actual database query here
       console.log('Fetching all accounts...');
-      return []; // Return empty array for now
+      const sql = 'SELECT * FROM accounts';
+      const { rows } = await query(sql);
+ return rows;
     } catch (error) {
       console.error('Error fetching all accounts:', error);
       throw error;
@@ -25,9 +26,11 @@ const accountService = {
    */
   async getAccountById(accountId) {
     try {
-      // Placeholder: Implement actual database query here
       console.log(`Fetching account with ID: ${accountId}`);
-      return null; // Return null for now
+      const sql = 'SELECT * FROM accounts WHERE account_id = $1';
+      const values = [accountId];
+      const { rows } = await query(sql, values);
+ return rows[0] || null; // Return the first row or null if not found
     } catch (error) {
       console.error(`Error fetching account with ID ${accountId}:`, error);
       throw error;
@@ -41,9 +44,18 @@ const accountService = {
    */
   async createAccount(accountData) {
     try {
-      // Placeholder: Implement actual database insertion here
       console.log('Creating new account:', accountData);
-      return { account_id: 1, ...accountData }; // Return a mock object for now
+      const sql = 'INSERT INTO accounts (account_name, account_type, initial_balance, current_balance, currency, user_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *';
+      const values = [
+ accountData.account_name,
+ accountData.account_type,
+ accountData.initial_balance,
+ accountData.current_balance, // Assuming current_balance is provided or calculated
+ accountData.currency,
+ accountData.user_id, // Assuming user_id is in accountData
+      ];
+      const { rows } = await query(sql, values);
+ return rows[0]; // Return the newly created account
     } catch (error) {
       console.error('Error creating account:', error);
       throw error;
@@ -58,9 +70,18 @@ const accountService = {
    */
   async updateAccount(accountId, accountData) {
     try {
-      // Placeholder: Implement actual database update here
       console.log(`Updating account with ID ${accountId}:`, accountData);
-      return { account_id: accountId, ...accountData }; // Return a mock object for now
+      // Construct the UPDATE query dynamically based on provided fields
+      const fields = Object.keys(accountData).map((key, index) => `${key} = $${index + 1}`).join(', ');
+      const values = Object.values(accountData);
+      values.push(accountId); // Add accountId for the WHERE clause
+
+      if (fields.length === 0) {
+        return null; // No fields to update
+      }
+      const sql = `UPDATE accounts SET ${fields} WHERE account_id = $${values.length} RETURNING *`;
+      const { rows } = await query(sql, values);
+ return rows[0] || null; // Return the updated account or null if not found
     } catch (error) {
       console.error(`Error updating account with ID ${accountId}:`, error);
       throw error;
@@ -74,9 +95,11 @@ const accountService = {
    */
   async deleteAccount(accountId) {
     try {
-      // Placeholder: Implement actual database deletion here
       console.log(`Deleting account with ID: ${accountId}`);
-      return true; // Return true for now
+      const sql = 'DELETE FROM accounts WHERE account_id = $1 RETURNING *';
+      const values = [accountId];
+      const { rows } = await query(sql, values);
+ return rows.length > 0; // Return true if a row was deleted, false otherwise
     } catch (error) {
       console.error(`Error deleting account with ID ${accountId}:`, error);
       throw error;
