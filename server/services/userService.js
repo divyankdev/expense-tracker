@@ -1,0 +1,54 @@
+// server/services/userService.js
+
+const { query } = require('../utils/db');
+
+// Placeholder function to get all users
+const getAllUsers = async () => {
+  const sql = 'SELECT * FROM users';
+  const { rows } = await query(sql);
+  return rows;
+};
+
+// Placeholder function to get a user by ID
+const getUserById = async (userId) => {
+  const sql = 'SELECT * FROM users WHERE user_id = $1';
+  const { rows } = await query(sql, [userId]);
+  return rows[0];
+};
+
+// Placeholder function to create a new user
+const createUser = async (userData) => {
+  const { email, password_hash, phone_number, first_name, last_name, date_of_birth, profile_picture_url } = userData;
+  const sql = 'INSERT INTO users (email, password_hash, phone_number, first_name, last_name, date_of_birth, profile_picture_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *';
+  const values = [email, password_hash, phone_number, first_name, last_name, date_of_birth, profile_picture_url];
+  const { rows } = await query(sql, values);
+  return rows[0];
+};
+
+// Placeholder function to update a user
+const updateUser = async (userId, userData) => {
+  const { email, password_hash, phone_number, first_name, last_name, date_of_birth, profile_picture_url, last_login, is_active } = userData;
+  const sql = `
+    UPDATE users
+    SET email = $1, password_hash = $2, phone_number = $3, first_name = $4, last_name = $5, date_of_birth = $6, profile_picture_url = $7, updated_at = CURRENT_TIMESTAMP, last_login = $8, is_active = $9
+    WHERE user_id = $10
+    RETURNING *`;
+  const values = [email, password_hash, phone_number, first_name, last_name, date_of_birth, profile_picture_url, last_login, is_active, userId];
+  const { rows } = await query(sql, values);
+  return rows[0];
+};
+
+// Placeholder function to delete a user
+const deleteUser = async (userId) => {
+  const sql = 'DELETE FROM users WHERE user_id = $1 RETURNING *';
+  const { rows } = await query(sql, [userId]);
+  return rows[0];
+};
+
+module.exports = {
+  getAllUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
+};
