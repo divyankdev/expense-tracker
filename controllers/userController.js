@@ -1,11 +1,12 @@
 const userService = require('../services/userService');
-
 const asyncHandler = require('../utils/asyncHandler');
+const responseHandler = require('../utils/responseHandler');
+const { HTTP_STATUS_CODES, RESPONSE_MESSAGES } = require('../utils/constants');
 
 const userController = {
   getAllUsers: asyncHandler(async (req, res) => {
     const users = await userService.getAllUsers();
-    res.json(users);
+    responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, users);
   }),
 
   getUserById: asyncHandler(async (req, res) => {
@@ -16,8 +17,9 @@ const userController = {
         user.profile_picture_url = `${req.protocol}://${req.get('host')}/uploads/${user.avatarPath.split('\\').pop().split('/').pop()}`; // Construct the URL
             }
       res.json(user);
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, user);
     } else {
-      res.status(404).json({ message: 'User not found' });
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.NOT_FOUND);
     }
   }),
 

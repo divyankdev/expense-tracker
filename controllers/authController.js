@@ -2,6 +2,8 @@
 
 const authService = require('../services/authService');
 const asyncHandler = require('../utils/asyncHandler');
+const responseHandler = require('../utils/responseHandler');
+const { HTTP_STATUS_CODES, RESPONSE_MESSAGES } = require('../utils/constants');
 const userService = require('../services/userService'); // Import userService
 
 // Placeholder controller function for user registration
@@ -13,10 +15,7 @@ const register = asyncHandler(async (req, res) => {
   // newUser.profile_picture_url = `https://www.gravatar.com/avatar/?d=retro&s=200&d=identicon&r=g&f=${newUser.firstName.charAt(0).toUpperCase()}`;
   newUser.profile_picture_url = userService.generateDefaultAvatarUrl(newUser.first_name);
 
-  res.status(201).json({
-    status: 'success',
-    data: newUser
-  });
+  responseHandler.sendSuccess(res, HTTP_STATUS_CODES.CREATED, RESPONSE_MESSAGES.USER_CREATED_SUCCESS, newUser);
 });
 
 // Placeholder controller function for user login
@@ -28,18 +27,11 @@ const login = asyncHandler(async (req, res) => {
   const tokens = await authService.loginUser(email, password);
 
   if (!tokens) {
-    return res.status(401).json({
-      status: 'error',
-      message: 'Invalid credentials'
-    });
+    return responseHandler.sendError(res, HTTP_STATUS_CODES.UNAUTHORIZED, RESPONSE_MESSAGES.INVALID_CREDENTIALS);
   }
 
-  res.status(200).json({
-    status: 'success',
-    data: tokens
-  });
+  responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.LOGIN_SUCCESS, tokens);
 });
-
 // Placeholder controller function for refreshing access token
 const refreshToken = asyncHandler(async (req, res) => {
   const { refreshToken } = req.body;
@@ -47,20 +39,14 @@ const refreshToken = asyncHandler(async (req, res) => {
   if (!refreshToken) {
     return res.status(401).json({
       status: 'error',
-      message: 'Refresh token is required',
+      message: RESPONSE_MESSAGES.REFRESH_TOKEN_REQUIRED,
     });
   }
-
   const newTokens = await authService.refreshAccessToken(refreshToken); // Assuming refreshAccessToken exists in authService
-
   if (!newTokens) {
     return res.status(403).json({ status: 'error', message: 'Invalid or expired refresh token' });
   }
-
- res.status(200).json({
-    status: 'success',
-    data: newTokens
-  });
+ responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, newTokens);
 });
 
 // Placeholder controller function for user logout
@@ -70,18 +56,12 @@ const logout = asyncHandler(async (req, res) => {
   } = req.body;
 
   if (!refreshToken) {
-    return res.status(400).json({ status: 'error', message: 'Refresh token is required' });
+    return responseHandler.sendError(res, HTTP_STATUS_CODES.BAD_REQUEST, RESPONSE_MESSAGES.REFRESH_TOKEN_REQUIRED);
   }
-
   const deletedToken = await authService.deleteRefreshToken(refreshToken);
-  if (!deletedToken) {
- return res.status(404).json({ status: 'error', message: 'Refresh token not found' });
-  }
-
-  res.status(200).json({
-    status: 'success',
-    message: 'Logged out successfully'
-  });
+ if (!deletedToken) {
+    return responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.REFRESH_TOKEN_NOT_FOUND);
+  } responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.LOGGED_OUT_SUCCESSFULLY);
 });
 const changePassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
@@ -89,25 +69,15 @@ const changePassword = asyncHandler(async (req, res) => {
 
   if (!oldPassword || !newPassword) {
     return res.status(400).json({ status: 'error', message: 'Old password and new password are required' });
-  }
-
+  } // TODO: Add validation for oldPassword and newPassword
   // TODO: Add more robust validation for password complexity
-  // TODO: Add validation for oldPassword and newPassword
-
   await authService.changePassword(userId, oldPassword, newPassword);
-
-  res.status(200).json({
-    status: 'success',
-    message: 'Password changed successfully',
-  });
+  responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.PASSWORD_CHANGE_SUCCESS);
 });
 
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
-  // TODO: Add input validation for email format
-
-  await authService.forgotPassword(email); // Placeholder call
-
+  await authService.forgotPassword(email); // Placeholder call // TODO: Add input validation for email format
   res.status(200).json({
     status: 'success',
     message: 'Password reset email sent if user exists.',

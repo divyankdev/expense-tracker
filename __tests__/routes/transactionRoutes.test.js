@@ -71,7 +71,8 @@ describe('Transaction Endpoints', () => {
   it('should get all transactions', async () => {
     const res = await request(app).get('/api/transactions'); // Assuming your transaction routes are under /api/transactions
     expect(res.statusCode).toEqual(200); // Or whatever status code your getAllTransactions endpoint returns on success
-    // Add more assertions based on the expected response body (e.g., expect(res.body.data).toBeInstanceOf(Array);)
+ expect(res.body).toHaveProperty('status', 'success');
+ expect(res.body.data).toBeInstanceOf(Array);
   });
 
   it('should create a new transaction', async () => {

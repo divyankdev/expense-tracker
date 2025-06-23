@@ -1,26 +1,32 @@
 const transactionService = require('../services/transactionService');
 const asyncHandler = require('../utils/asyncHandler');
+const responseHandler = require('../utils/responseHandler');
+const { HTTP_STATUS_CODES, RESPONSE_MESSAGES } = require('../utils/constants');
 
 const transactionController = {
   getAllTransactions: asyncHandler(async (req, res) => {
     const transactions = await transactionService.getAllTransactions();
-    res.json(transactions);
+    if (transactions) {
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, transactions);
+    } else {
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.TRANSACTION_NOT_FOUND);
+    }
   }),
 
   getTransactionById: asyncHandler(async (req, res) => {
     const transactionId = req.params.id;
     const transaction = await transactionService.getTransactionById(transactionId);
     if (transaction) {
-      res.json(transaction);
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, transaction);
     } else {
-      res.status(404).json({ message: 'Transaction not found' });
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.TRANSACTION_NOT_FOUND);
     }
   }),
 
   createTransaction: asyncHandler(async (req, res) => {
     const transactionData = req.body;
     const newTransaction = await transactionService.createTransaction(transactionData);
-    res.status(201).json(newTransaction);
+    responseHandler.sendSuccess(res, HTTP_STATUS_CODES.CREATED, RESPONSE_MESSAGES.TRANSACTION_CREATED_SUCCESS, newTransaction);
   }),
 
   updateTransaction: asyncHandler(async (req, res) => {
@@ -28,19 +34,19 @@ const transactionController = {
     const transactionData = req.body;
     const updatedTransaction = await transactionService.updateTransaction(transactionId, transactionData);
     if (updatedTransaction) {
-      res.json(updatedTransaction);
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.TRANSACTION_UPDATED_SUCCESS, updatedTransaction);
     } else {
-      res.status(404).json({ message: 'Transaction not found' });
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.TRANSACTION_NOT_FOUND);
     }
   }),
 
   deleteTransaction: asyncHandler(async (req, res) => {
     const transactionId = req.params.id;
     const deletedTransaction = await transactionService.deleteTransaction(transactionId);
-    if (deletedTransaction) {
-      res.json({ message: 'Transaction deleted successfully' });
+ if (deletedTransaction) {
+ responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.TRANSACTION_DELETED_SUCCESS, deletedTransaction); // Or send 204 No Content
     } else {
-      res.status(404).json({ message: 'Transaction not found' });
+ responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.TRANSACTION_NOT_FOUND);
     }
   }),
 };

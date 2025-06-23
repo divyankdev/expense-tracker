@@ -1,37 +1,48 @@
 const recurringTransactionService = require('../services/recurringTransactionService');
 const asyncHandler = require('../utils/asyncHandler');
+const responseHandler = require('../utils/responseHandler');
+const { HTTP_STATUS_CODES, RESPONSE_MESSAGES } = require('../utils/constants');
 
 const getAllRecurringTransactions = asyncHandler(async (req, res) => {
   const recurringTransactions = await recurringTransactionService.getAllRecurringTransactions();
-  res.json(recurringTransactions);
+  responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, recurringTransactions);
 });
 
 const getRecurringTransactionById = asyncHandler(async (req, res) => {
   const recurringTransaction = await recurringTransactionService.getRecurringTransactionById(req.params.id);
   if (recurringTransaction) {
-    res.json(recurringTransaction);
+    responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, recurringTransaction);
   } else {
-    res.status(404).json({ message: 'Recurring transaction not found' });
+    responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.NOT_FOUND);
   }
 });
 
 const createRecurringTransaction = asyncHandler(async (req, res) => {
   const newRecurringTransaction = await recurringTransactionService.createRecurringTransaction(req.body);
-  res.status(201).json(newRecurringTransaction);
+  if (newRecurringTransaction) {
+    responseHandler.sendSuccess(res, HTTP_STATUS_CODES.CREATED, RESPONSE_MESSAGES.SUCCESS, newRecurringTransaction);
+  } else {
+    // Assuming service throws an error or returns null/undefined on failure
+    responseHandler.sendError(res, HTTP_STATUS_CODES.BAD_REQUEST, RESPONSE_MESSAGES.ERROR); // Or a more specific message
+  }
 });
 
 const updateRecurringTransaction = asyncHandler(async (req, res) => {
   const updatedRecurringTransaction = await recurringTransactionService.updateRecurringTransaction(req.params.id, req.body);
   if (updatedRecurringTransaction) {
-    res.json(updatedRecurringTransaction);
+    responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, updatedRecurringTransaction);
   } else {
-    res.status(404).json({ message: 'Recurring transaction not found' });
+    responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.NOT_FOUND);
   }
 });
 
 const deleteRecurringTransaction = asyncHandler(async (req, res) => {
   const deletedTransaction = await recurringTransactionService.deleteRecurringTransaction(req.params.id);
-  res.json({ message: 'Recurring transaction deleted successfully', deletedTransaction });
+  if (deletedTransaction) {
+    responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, deletedTransaction); // Or send 204 No Content if preferred
+  } else {
+    responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.NOT_FOUND);
+  }
 });
 
 module.exports = {

@@ -1,5 +1,6 @@
 const request = require('supertest');
 const app = require('../server.js'); // Assuming your Express app is exported from server.js
+const { RESPONSE_MESSAGES } = require('../../utils/constants'); // Import constants
 const userService = require('../services/userService');
 const bcrypt = require('bcrypt'); // Assuming bcrypt is used for password hashing
 
@@ -34,7 +35,7 @@ describe('Auth Endpoints', () => {
       });
     expect(res.statusCode).toEqual(201);
     expect(res.body).toHaveProperty('status', 'success');
-    // expect(res.body.data).toHaveProperty('user');
+    expect(res.body.data).toHaveProperty('user'); // Assuming user object is returned
     expect(res.body.data).toHaveProperty('accessToken'); // Assuming accessToken is returned
     expect(res.body.data).toHaveProperty('refreshToken'); // Assuming refreshToken is returned
     // Add more specific assertions as needed
@@ -54,7 +55,7 @@ describe('Auth Endpoints', () => {
       });
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
-    // expect(res.body.data).toHaveProperty('user'); // Check for user object in response
+ expect(res.body.data).toHaveProperty('user'); // Check for user object in response
     expect(res.body.data).toHaveProperty('accessToken');
     expect(res.body.data).toHaveProperty('refreshToken');
 
@@ -89,7 +90,7 @@ describe('Auth Endpoints', () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body).toHaveProperty('message', 'Logged out successfully'); // Or the appropriate success message
+ expect(res.body).toHaveProperty('message', RESPONSE_MESSAGES.LOGGED_OUT_SUCCESSFULLY); // Use constant
   });
 
   afterAll(async () => {

@@ -1,36 +1,40 @@
 const accountService = require('../services/accountService');
 const asyncHandler = require('../utils/asyncHandler');
+const responseHandler = require('../utils/responseHandler');
+const { HTTP_STATUS_CODES, RESPONSE_MESSAGES } = require('../utils/constants');
 
 const accountController = {
   getAllAccounts: asyncHandler(async (req, res) => {
     const accounts = await accountService.getAllAccounts();
-    res.json(accounts);
+    responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, accounts);
   }),
 
   getAccountById: asyncHandler(async (req, res) => {
     const accountId = req.params.id; // Assuming the ID is passed as a URL parameter
     const account = await accountService.getAccountById(accountId);
     if (account) {
-      res.json(account);
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, account);
     } else {
-      res.status(404).json({ message: 'Account not found' });
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
     }
   }),
 
   createAccount: asyncHandler(async (req, res) => {
     const accountData = req.body; // Assuming account data is in the request body
+    // TODO: Add input validation for accountData
     const newAccount = await accountService.createAccount(accountData);
-    res.status(201).json(newAccount);
+    responseHandler.sendSuccess(res, HTTP_STATUS_CODES.CREATED, RESPONSE_MESSAGES.ACCOUNT_CREATED_SUCCESS, newAccount);
   }),
 
   updateAccount: asyncHandler(async (req, res) => {
     const accountId = req.params.id; // Assuming the ID is passed as a URL parameter
     const accountData = req.body; // Assuming updated account data is in the request body
+    // TODO: Add input validation for accountData
     const updatedAccount = await accountService.updateAccount(accountId, accountData);
     if (updatedAccount) {
-      res.json(updatedAccount);
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.ACCOUNT_UPDATED_SUCCESS, updatedAccount);
     } else {
-      res.status(404).json({ message: 'Account not found' });
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
     }
   }),
 
@@ -38,9 +42,9 @@ const accountController = {
     const accountId = req.params.id; // Assuming the ID is passed as a URL parameter
     const success = await accountService.deleteAccount(accountId);
     if (success) {
-      res.status(204).send(); // No content to send back on successful deletion
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.NO_CONTENT); // 204 No Content
     } else {
-      res.status(404).json({ message: 'Account not found' });
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
     }
   }),
 }
