@@ -1,9 +1,9 @@
 const request = require('supertest');
 const app = require('../server'); // Assuming your Express app is exported from server.js
-const userService = require('../../services/userService');
-const accountService = require('../../services/accountService');
-const categoryService = require('../../services/categoryService');
-const transactionService = require('../../services/transactionService');
+const userService = require('../services/userService');
+const accountService = require('../services/accountService');
+const categoryService = require('../services/categoryService');
+const transactionService = require('../services/transactionService');
 const bcrypt = require('bcrypt');
 
 let testUser;
@@ -28,8 +28,8 @@ describe('Transaction Endpoints', () => {
     testAccount = await accountService.createAccount({
       user_id: testUser.user_id,
       account_name: 'Test Account',
-      account_type: 'Checking',
-      initial_balance: 1000,
+      account_type: 'bank_account',
+      // initial_balance: 1000,
       current_balance: 1000,
     });
 
@@ -37,7 +37,7 @@ describe('Transaction Endpoints', () => {
     testCategory = await categoryService.createCategory({
       user_id: testUser.user_id,
       category_name: 'Test Category',
-      category_type: 'Expense',
+      category_type: 'expense',
     });
 
     // Create a test transaction for the user, account, and category
@@ -46,7 +46,7 @@ describe('Transaction Endpoints', () => {
       account_id: testAccount.account_id,
       category_id: testCategory.category_id,
       amount: 50,
-      transaction_type: 'Expense',
+      transaction_type: 'expense',
       description: 'Test transaction',
       transaction_date: new Date().toISOString(),
     });
