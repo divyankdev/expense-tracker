@@ -20,7 +20,10 @@ router.get('/google/callback',
   async (req, res, next) => {
     try {
       // Successful authentication, generate and send tokens
-      const user = req.user; // User is available in req.user after Passport authentication
+      const user = {
+        ...req.user, // User is available in req.user after Passport authentication
+        profile_picture_url: req.user.photos && req.user.photos.length > 0 ? req.user.photos[0].value : null // Extract profile picture URL
+      };
       const tokens = authService.generateTokens(user.user_id);
       await authService.saveRefreshToken(user.user_id, tokens.refreshToken);
       res.json({ user, ...tokens });

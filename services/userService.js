@@ -18,7 +18,7 @@ const getUserById = async (userId) => {
 
 // Placeholder function to create a new user
 const createUser = async (userData) => {
-  const { email, password_hash, phone_number, first_name, last_name, date_of_birth, profile_picture_url } = userData;
+  const { email, password_hash, phone_number, first_name, last_name, date_of_birth, profile_picture_url } = userData; // Ensure profile_picture_url is destructured here
   const sql = 'INSERT INTO users (email, password_hash, phone_number, first_name, last_name, date_of_birth, profile_picture_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *';
   const values = [email, password_hash, phone_number, first_name, last_name, date_of_birth, profile_picture_url];
   const { rows } = await query(sql, values);
@@ -27,7 +27,7 @@ const createUser = async (userData) => {
 
 // Placeholder function to update a user
 const updateUser = async (userId, userData) => {
-  const { email, password_hash, phone_number, first_name, last_name, date_of_birth, profile_picture_url, last_login, is_active } = userData;
+  const { email, password_hash, phone_number, first_name, last_name, date_of_birth, profile_picture_url, last_login, is_active } = userData; // Ensure profile_picture_url is destructured here
   const sql = `
     UPDATE users
     SET email = $1, password_hash = $2, phone_number = $3, first_name = $4, last_name = $5, date_of_birth = $6, profile_picture_url = $7, updated_at = CURRENT_TIMESTAMP, last_login = $8, is_active = $9
@@ -45,10 +45,26 @@ const deleteUser = async (userId) => {
   return rows[0];
 };
 
+const generateDefaultAvatarUrl = (firstName) => {
+  // This is a simple example using a placeholder service.
+  // In a real application, you might use a service like Gravatar or
+  // a custom image generation library.
+  return `https://ui-avatars.com/api/?name=${firstName}&background=random&color=fff`;
+}; // Ensure this function exists and is exported
+
+const uploadAvatar = async (userId, avatarPath) => {
+  const sql = 'UPDATE users SET profile_picture_url = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING *';
+  const values = [avatarPath, userId];
+  const { rows } = await query(sql, values);
+  return rows[0];
+};
+
 module.exports = {
   getAllUsers,
   getUserById,
   createUser,
   updateUser,
   deleteUser,
+  uploadAvatar,
+  generateDefaultAvatarUrl,
 };

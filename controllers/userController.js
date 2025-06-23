@@ -11,10 +11,24 @@ const userController = {
   getUserById: asyncHandler(async (req, res) => {
     const userId = req.params.id;
     const user = await userService.getUserById(userId);
-    if (user) {
+    if (user) {      // Add the avatar URL to the response
+      if (user.avatarPath) {
+        user.profile_picture_url = `${req.protocol}://${req.get('host')}/uploads/${user.avatarPath.split('\\').pop().split('/').pop()}`; // Construct the URL
+            }
       res.json(user);
     } else {
       res.status(404).json({ message: 'User not found' });
+    }
+  }),
+
+  uploadAvatar: asyncHandler(async (req, res) => {
+    const userId = req.params.id;
+    const avatarPath = req.file.path;
+    const updatedUser = await userService.uploadAvatar(userId, avatarPath);
+    if (updatedUser) {
+      res.json({ message: 'Avatar uploaded successfully', profile_picture_url: `${req.protocol}://${req.get('host')}/uploads/${avatarPath.split('\\').pop().split('/').pop()}` });
+    } else {
+      res.status(404).json({ message: 'User not found or avatar upload failed' });
     }
   }),
 

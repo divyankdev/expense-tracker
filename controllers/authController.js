@@ -2,11 +2,17 @@
 
 const authService = require('../services/authService');
 const asyncHandler = require('../utils/asyncHandler');
+const userService = require('../services/userService'); // Import userService
 
 // Placeholder controller function for user registration
 const register = asyncHandler(async (req, res) => {
   const userData = req.body;
   const newUser = await authService.registerUser(userData);
+
+  // Generate default avatar URL based on first name (example using Gravatar)
+  // newUser.profile_picture_url = `https://www.gravatar.com/avatar/?d=retro&s=200&d=identicon&r=g&f=${newUser.firstName.charAt(0).toUpperCase()}`;
+  newUser.profile_picture_url = userService.generateDefaultAvatarUrl(newUser.first_name);
+
   res.status(201).json({
     status: 'success',
     data: newUser
@@ -124,6 +130,40 @@ const resetPassword = asyncHandler(async (req, res) => {
     message: 'Password has been reset successfully.',
   });
 });
+// Google authentication callback
+const googleAuthCallback = asyncHandler(async (req, res) => {
+  // Passport.js successfully authenticated the user
+  // The user information is available in req.user
+  const googleProfile = req.user;
+
+  // Check if the user already exists in the database
+  let user = await userService.getUserByEmail(googleProfile.emails[0].value);
+
+  if (!user) {
+    // If user doesn't exist, create a new user
+    const newUser = {
+      email: googleProfile.emails[0].value,
+      first_name: googleProfile.name.givenName,
+      last_name: googleProfile.name.familyName,
+      profile_picture_url: googleProfile.photos && googleProfile.photos.length > 0 ? googleProfile.photos[0].value : undefined,
+      // Add other fields as needed
+    };
+    user = await userService.createUser(newUser);
+  } else {
+    // If user exists, you might want to update their profile picture if it's changed
+    if (googleProfile.photos && googleProfile.photos.length > 0 && user.profile_picture_url !== googleProfile.photos[0].value) {
+      user.profile_picture_url = googleProfile.photos[0].value;
+      await userService.updateUser(user._id, { profile_picture_url: user.profile_picture_url });
+    }
+  }
+
+  // Generate tokens for the user (you'll need a function in authService for this)
+  const tokens = await authService.generateAuthTokens(user); // Assuming generateAuthTokens exists in authService
+
+  // Redirect the user to your frontend application with tokens or other relevant info
+  // This is a placeholder redirect, adjust as per your frontend setup
+  res.redirect(`YOUR_FRONTEND_REDIRECT_URL?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`);
+});
 
 module.exports = {
   register,
@@ -133,4 +173,5 @@ module.exports = {
   changePassword,
   forgotPassword,
   resetPassword,
+  googleAuthCallback,
 };

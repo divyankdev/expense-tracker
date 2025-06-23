@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const passport = require('passport');
+const path = require('path');
 const configurePassport = require('./config/passport');
 const { query } = require('./utils/db'); // Import the query function
 const port = 3000;
@@ -40,6 +41,9 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Serve static files from the 'uploads' directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Use routes
 app.use('/api/accounts', accountRoutes);
