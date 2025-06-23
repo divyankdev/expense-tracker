@@ -8,7 +8,7 @@ const userService = require('../services/userService'); // Import userService
 const register = asyncHandler(async (req, res) => {
   const userData = req.body;
   const newUser = await authService.registerUser(userData);
-
+  
   // Generate default avatar URL based on first name (example using Gravatar)
   // newUser.profile_picture_url = `https://www.gravatar.com/avatar/?d=retro&s=200&d=identicon&r=g&f=${newUser.firstName.charAt(0).toUpperCase()}`;
   newUser.profile_picture_url = userService.generateDefaultAvatarUrl(newUser.first_name);

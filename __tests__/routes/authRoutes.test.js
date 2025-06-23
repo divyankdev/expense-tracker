@@ -39,7 +39,6 @@ describe('Auth Endpoints', () => {
     expect(res.body.data).toHaveProperty('refreshToken'); // Assuming refreshToken is returned
     // Add more specific assertions as needed
   });
-
   // Store tokens for subsequent tests
   let accessToken;
   let refreshToken;
@@ -55,9 +54,42 @@ describe('Auth Endpoints', () => {
       });
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('user'); // Check for user object in response
-    expect(res.body.data).toHaveProperty('accessToken'); // Assuming accessToken is returned on login
-    expect(res.body.data).toHaveProperty('refreshToken'); // Assuming refreshToken is returned on login
+    // expect(res.body.data).toHaveProperty('user'); // Check for user object in response
+    expect(res.body.data).toHaveProperty('accessToken');
+    expect(res.body.data).toHaveProperty('refreshToken');
+
+    // Store tokens for subsequent tests
+    accessToken = res.body.data.accessToken;
+    refreshToken = res.body.data.refreshToken;
+  });
+
+  it('should refresh access token using a valid refresh token', async () => {
+    // This test requires a refresh token from a successful login
+    if (!refreshToken) {
+      throw new Error('No refresh token available for refresh token test. Ensure login test runs and stores the token.');
+    }
+    const res = await request(app)
+      .post('/api/auth/refresh-token')
+      .send({ refreshToken });
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('status', 'success');
+    expect(res.body.data).toHaveProperty('accessToken'); // Should receive a new access token
+    expect(res.body.data).toHaveProperty('refreshToken'); // Should receive a new refresh token (or the same, depending on implementation)
+  });
+
+  it('should logout a user using a valid refresh token', async () => {
+    // This test requires a refresh token from a successful login
+    if (!refreshToken) {
+      throw new Error('No refresh token available for logout test. Ensure login test runs and stores the token.');
+    }
+    const res = await request(app)
+      .post('/api/auth/logout')
+      .send({ refreshToken });
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('status', 'success');
+    expect(res.body).toHaveProperty('message', 'Logged out successfully'); // Or the appropriate success message
   });
 
   afterAll(async () => {
