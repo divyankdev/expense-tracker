@@ -18,9 +18,16 @@ const registerUser = async (userData) => {
       userData.phone_number, userData.date_of_birth, userData.profile_picture_url
     ];
     const { rows } = await query(sql, values);
-    return rows[0]; // Return the created user object (excluding password_hash)
+    // return rows[0]; // Return the created user object (excluding password_hash)
+
+    const newUser = rows[0];
+
+    // Generate tokens
+    const tokens = generateTokens(newUser.user_id, newUser.email);
+    await saveRefreshToken(newUser.user_id, tokens.refreshToken);
+    return { user: newUser, ...tokens };
   } catch (error) {
-    throw error;
+ throw error;
   }
 };
 

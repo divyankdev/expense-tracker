@@ -27,14 +27,16 @@ describe('Auth Endpoints', () => {
     const res = await request(app)
       .post('/api/auth/register')
       .send({
-        name: 'Test User',
+        first_name: 'Test',
+        last_name: 'User',
         email: `testuser${Date.now()}@example.com`, // Use unique email
         password: 'password123'
       });
     expect(res.statusCode).toEqual(201);
-    expect(res.body).toHaveProperty('user');
-    expect(res.body).toHaveProperty('accessToken'); // Assuming accessToken is returned
-    expect(res.body).toHaveProperty('refreshToken'); // Assuming refreshToken is returned
+    expect(res.body).toHaveProperty('status', 'success');
+    // expect(res.body.data).toHaveProperty('user');
+    expect(res.body.data).toHaveProperty('accessToken'); // Assuming accessToken is returned
+    expect(res.body.data).toHaveProperty('refreshToken'); // Assuming refreshToken is returned
     // Add more specific assertions as needed
   });
 
@@ -52,10 +54,10 @@ describe('Auth Endpoints', () => {
         password: 'password123'
       });
     expect(res.statusCode).toEqual(200);
-    expect(res.body).toHaveProperty('user'); // Check for user object in response
-    expect(res.body).toHaveProperty('user');
-    expect(res.body).toHaveProperty('accessToken'); // Assuming accessToken is returned on login
-    expect(res.body).toHaveProperty('refreshToken'); // Assuming refreshToken is returned on login
+    expect(res.body).toHaveProperty('status', 'success');
+    expect(res.body.data).toHaveProperty('user'); // Check for user object in response
+    expect(res.body.data).toHaveProperty('accessToken'); // Assuming accessToken is returned on login
+    expect(res.body.data).toHaveProperty('refreshToken'); // Assuming refreshToken is returned on login
   });
 
   afterAll(async () => {

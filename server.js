@@ -31,6 +31,9 @@ async function testDbConnection() {
 configurePassport(passport);
 app.use(passport.initialize());
 
+// Add body-parsing middleware
+app.use(express.json()); // For parsing application/json
+
 app.use(cors({
   origin: [
     'http://localhost:9002',  // Your Next.js dev server
@@ -69,7 +72,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
-  testDbConnection();
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+    testDbConnection();
+  });
+}
+module.exports = app;
