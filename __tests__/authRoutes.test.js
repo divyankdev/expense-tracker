@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../server.js'); // Assuming your Express app is exported from server.js
-const { RESPONSE_MESSAGES } = require('../../utils/constants'); // Import constants
+const { RESPONSE_MESSAGES } = require('../utils/constants'); // Import constants
 const userService = require('../services/userService');
 const bcrypt = require('bcrypt'); // Assuming bcrypt is used for password hashing
 
@@ -23,14 +23,16 @@ describe('Auth Endpoints', () => {
       profile_picture_url: null
     });
   });
+  let registeredUserEmail;
 
   it('should register a new user', async () => {
+    registeredUserEmail = `testuser${Date.now()}@example.com`
     const res = await request(app)
       .post('/api/auth/register')
       .send({
         first_name: 'Test',
         last_name: 'User',
-        email: `testuser${Date.now()}@example.com`, // Use unique email
+        email: registeredUserEmail,  // Use unique email
         password: 'password123'
       });
     expect(res.statusCode).toEqual(201);
@@ -55,7 +57,7 @@ describe('Auth Endpoints', () => {
       });
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
- expect(res.body.data).toHaveProperty('user'); // Check for user object in response
+    expect(res.body.data).toHaveProperty('user'); // Check for user object in response
     expect(res.body.data).toHaveProperty('accessToken');
     expect(res.body.data).toHaveProperty('refreshToken');
 
@@ -90,11 +92,19 @@ describe('Auth Endpoints', () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
- expect(res.body).toHaveProperty('message', RESPONSE_MESSAGES.LOGGED_OUT_SUCCESSFULLY); // Use constant
+    expect(res.body).toHaveProperty('message', RESPONSE_MESSAGES.LOGGED_OUT_SUCCESSFULLY); // Use constant
   });
 
   afterAll(async () => {
-    // Delete the test user after all tests are done
+    // Delete the user created manually
     await userService.deleteUser(testUser.user_id);
-  });
+  
+    // Delete the user created through registration test
+    // if (registeredUserEmail) {
+    //   const user = await userService.getUserByEmail(registeredUserEmail);
+    //   if (user) {
+    //     await userService.deleteUser(user.user_id);
+    //   }
+    // }
+  });  
 });

@@ -2,7 +2,29 @@
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { query } = require('../utils/db'); // Assuming you have a db utility
+
+// Helper function to hash tokens
+const hashToken = (token) => {
+  return crypto.createHash('sha256').update(token).digest('hex');
+};
+
+// Helper function to parse token expiry
+const parseTokenExpiry = (expiryString) => {
+  const expiryValue = parseInt(expiryString.slice(0, -1));
+  const expiryUnit = expiryString.slice(-1);
+  
+  let expiryMs;
+  switch(expiryUnit) {
+    case 'd': expiryMs = expiryValue * 24 * 60 * 60 * 1000; break;
+    case 'h': expiryMs = expiryValue * 60 * 60 * 1000; break;
+    case 'm': expiryMs = expiryValue * 60 * 1000; break;
+    default: expiryMs = 7 * 24 * 60 * 60 * 1000; // Default 7 days
+  }
+  
+  return expiryMs;
+};
 
 // Placeholder function to register a new user
 const registerUser = async (userData) => {
@@ -18,7 +40,6 @@ const registerUser = async (userData) => {
       userData.phone_number, userData.date_of_birth, userData.profile_picture_url
     ];
     const { rows } = await query(sql, values);
-    // return rows[0]; // Return the created user object (excluding password_hash)
 
     const newUser = rows[0];
 
@@ -27,7 +48,7 @@ const registerUser = async (userData) => {
     await saveRefreshToken(newUser.user_id, tokens.refreshToken);
     return { user: newUser, ...tokens };
   } catch (error) {
- throw error;
+    throw error;
   }
 };
 
@@ -40,14 +61,14 @@ const loginUser = async (email, password) => {
     const user = userRows[0];
 
     if (!user) {
-      return null; // User not found
+      throw new Error('User not found'); // User does not exist
     }
 
     // Compare passwords
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!passwordMatch) {
-      return null; // Incorrect password
+      throw new Error('Invalid password'); // Password does not match
     }
 
     // Generate tokens
@@ -70,11 +91,20 @@ const generateTokens = (userId, email) => {
   const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
   const accessTokenExpiry = process.env.ACCESS_TOKEN_EXPIRY || '15m';
   const accessToken = jwt.sign({ userId, email }, accessTokenSecret, { expiresIn: accessTokenExpiry });
+  
   // Use a different secret for refresh tokens
   const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
   const refreshTokenExpiry = process.env.REFRESH_TOKEN_EXPIRY || '7d';
   const refreshToken = jwt.sign({ userId, email }, refreshTokenSecret, { expiresIn: refreshTokenExpiry });
+  
   return { accessToken, refreshToken };
+};
+
+// FIXED: Missing function - Generate auth tokens (used in Google auth)
+const generateAuthTokens = async (user) => {
+  const tokens = generateTokens(user.user_id, user.email);
+  await saveRefreshToken(user.user_id, tokens.refreshToken);
+  return tokens;
 };
 
 // Placeholder function to verify access token
@@ -83,19 +113,21 @@ const verifyAccessToken = (token) => {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     return decoded;
   } catch (error) {
-    return null; // Invalid token
+    throw new Error('Invalid access token'); // Re-throw a generic error for security
   }
 };
 
-// Function to verify refresh token and check against database
+// FIXED: Function to verify refresh token and check against database with hashing
 const verifyRefreshToken = async (token) => {
   try {
     const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
 
+    // Hash the token to compare with stored hash
+    const tokenHash = hashToken(token);
+
     // Check if the refresh token exists in the database and is active
-    // NOTE: In a real application, you should hash the refresh token before storing and comparing
     const sql = 'SELECT * FROM user_tokens WHERE refresh_token_hash = $1 AND user_id = $2 AND is_active = true AND expires_at > NOW()';
-    const { rows } = await query(sql, [token, decoded.userId]);
+    const { rows } = await query(sql, [tokenHash, decoded.userId]);
 
     const tokenExists = rows.length > 0;
 
@@ -109,7 +141,26 @@ const verifyRefreshToken = async (token) => {
   }
 };
 
-// Function to change a user's password
+// FIXED: Missing function - Refresh access token with proper verification
+const refreshAccessToken = async (refreshToken) => {
+  try {
+    // First verify the refresh token
+    const decoded = await verifyRefreshToken(refreshToken);
+    
+    // Generate new tokens
+    const newTokens = generateTokens(decoded.userId, decoded.email);
+    
+    // Invalidate old refresh token (token rotation)
+    await deleteRefreshToken(refreshToken);
+    
+    // Save new refresh token
+    await saveRefreshToken(decoded.userId, newTokens.refreshToken);
+    
+    return newTokens;
+  } catch (error) {
+    throw error;
+  }
+};
 
 // Function to handle forgot password request
 const forgotPassword = async (email) => {
@@ -126,17 +177,16 @@ const forgotPassword = async (email) => {
     }
 
     // Generate a unique token (e.g., using crypto)
-    const crypto = require('crypto');
     const resetToken = crypto.randomBytes(32).toString('hex');
 
     // Hash the token before saving to database (good practice)
-    const tokenHash = await bcrypt.hash(resetToken, 10); // Use bcrypt to hash the token
+    const tokenHash = hashToken(resetToken); // Use consistent hashing
 
     // Set token expiry (e.g., 1 hour)
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
     // Save the token in the user_tokens table with type 'password_reset'
-    const saveTokenSql = 'INSERT INTO user_tokens (user_id, refresh_token_hash, expires_at, token_type) VALUES ($1, $2, $3, $4) RETURNING *';
+    const saveTokenSql = 'INSERT INTO user_tokens (user_id, refresh_token_hash, expires_at) VALUES ($1, $2, $3) RETURNING *';
     const { rows: tokenRows } = await query(saveTokenSql, [user.user_id, tokenHash, expiresAt, 'password_reset']);
     const savedToken = tokenRows[0];
 
@@ -187,41 +237,30 @@ const changePassword = async (userId, oldPassword, newPassword) => {
   }
 };
 
-// Function to handle reset password request
+// FIXED: Function to handle reset password request with proper token comparison
 const resetPassword = async (token, newPassword) => {
   try {
-    // NOTE: Assuming the token passed here is the plain token from the email link.
-    // We need to compare it with the hashed token in the database.
+    // Hash the provided token to compare with stored hash
+    const tokenHash = hashToken(token);
 
-    // Find the token in user_tokens that matches the provided token hash,
-    // is for password reset, active, and not expired. We join with users
-    // to get the user_id directly from the token entry.
-    // NOTE: Assuming the token passed here is the plain token from the email link.
-    // We need to compare it with the hashed token in the database.
-    const findTokenSql = 'SELECT ut.*, u.user_id FROM user_tokens ut JOIN users u ON ut.user_id = u.user_id WHERE ut.token_type = \'password_reset\' AND ut.is_active = true AND ut.expires_at > NOW()';
-    const { rows: tokenRows } = await query(findTokenSql);
+    // Find the token in user_tokens that matches the hashed token
+    const findTokenSql = `
+      SELECT ut.*, u.user_id 
+      FROM user_tokens ut 
+      JOIN users u ON ut.user_id = u.user_id 
+      WHERE ut.refresh_token_hash = $1 
+        // AND ut.token_type = 'password_reset' 
+        AND ut.is_active = true 
+        AND ut.expires_at > NOW()
+    `;
+    const { rows: tokenRows } = await query(findTokenSql, [tokenHash]);
 
-    let validTokenEntry = null;
-    for (const row of tokenRows) {
-        const match = await bcrypt.compare(token, row.refresh_token_hash); // Compare plain token with hashed token
-        if (match) {
-            validTokenEntry = row;
-            break;
-        }
-    }
-
-    if (!validTokenEntry) {
+    if (tokenRows.length === 0) {
       throw new Error('Invalid, expired, or used reset token.');
     }
 
-    // Retrieve the user associated with the valid token
-    const userSql = 'SELECT user_id FROM users WHERE user_id = $1';
-    const { rows: userRows } = await query(userSql, [validTokenEntry.user_id]);
-    const user = userRows[0];
+    const validTokenEntry = tokenRows[0];
 
-    if (!user) {
-        throw new Error('User not found for this reset token.');
-    }
     // Hash the new password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
@@ -230,28 +269,29 @@ const resetPassword = async (token, newPassword) => {
     const updatePasswordSql = 'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2';
     await query(updatePasswordSql, [hashedPassword, validTokenEntry.user_id]);
 
-    // Invalidate or delete the token from the database
+    // Invalidate the token from the database
     const invalidateTokenSql = 'UPDATE user_tokens SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE token_id = $1';
     await query(invalidateTokenSql, [validTokenEntry.token_id]);
 
   } catch (error) {
     throw error;
   }
-}
-// Function to save refresh token in the database
+};
+
+// FIXED: Function to save refresh token in the database with hashing
 const saveRefreshToken = async (userId, refreshToken) => {
   try {
-    // In a real application, you should hash the refresh token before saving it.
-    const refreshTokenExpiryDays = parseInt((process.env.REFRESH_TOKEN_EXPIRY || '7d').slice(0, -1));
-    const expiresAt = new Date(Date.now() + (refreshTokenExpiryDays * 24 * 60 * 60 * 1000));
+    // Hash the refresh token before saving
+    const tokenHash = hashToken(refreshToken);
+    
+    // Parse expiry properly
+    const expiryString = process.env.REFRESH_TOKEN_EXPIRY || '7d';
+    const expiryMs = parseTokenExpiry(expiryString);
+    const expiresAt = new Date(Date.now() + expiryMs);
 
-    // Check if a refresh token already exists for this user and device (optional, depending on desired behavior)
-    // For simplicity here, we'll just insert a new one or potentially update an existing one.
-    // A more robust approach would involve managing multiple tokens per user/device.
-
-    // Insert the new refresh token
+    // Insert the new refresh token with hash
     const sql = 'INSERT INTO user_tokens (user_id, refresh_token_hash, expires_at) VALUES ($1, $2, $3) RETURNING *';
-    const { rows } = await query(sql, [userId, refreshToken, expiresAt]);
+    const { rows } = await query(sql, [userId, tokenHash, expiresAt]);
     return rows[0];
 
   } catch (error) {
@@ -259,29 +299,44 @@ const saveRefreshToken = async (userId, refreshToken) => {
   }
 };
 
-// Function to delete refresh token from the database
+// FIXED: Function to delete refresh token from the database with hashing
 const deleteRefreshToken = async (refreshToken) => {
-   try {
-    // NOTE: Assuming you store the token directly for now.
-    // In a real application, you should hash the refresh token before comparing in the database.
+  try {
+    // Hash the token to find it in database
+    const tokenHash = hashToken(refreshToken);
+    
     const sql = 'DELETE FROM user_tokens WHERE refresh_token_hash = $1 RETURNING *';
-    const { rows } = await query(sql, [refreshToken]);
+    const { rows } = await query(sql, [tokenHash]);
     return rows[0]; // Return the deleted token info
   } catch (error) {
     throw error;
   }
 };
 
+// NEW: Function to cleanup expired tokens
+const cleanupExpiredTokens = async () => {
+  try {
+    const sql = 'DELETE FROM user_tokens WHERE expires_at < NOW() OR is_active = false';
+    const { rows } = await query(sql);
+    return rows.length; // Return count of cleaned up tokens
+  } catch (error) {
+    console.error('Error cleaning up expired tokens:', error);
+    throw error;
+  }
+};
 
 module.exports = {
   registerUser,
   loginUser,
   generateTokens,
+  generateAuthTokens, // ADDED
   verifyAccessToken,
   verifyRefreshToken,
+  refreshAccessToken, // ADDED
   saveRefreshToken,
   deleteRefreshToken,
   changePassword,
   forgotPassword,
   resetPassword,
+  cleanupExpiredTokens, // ADDED
 };

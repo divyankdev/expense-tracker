@@ -6,40 +6,44 @@ const { HTTP_STATUS_CODES, RESPONSE_MESSAGES } = require('../utils/constants');
 const attachmentController = {
   getAllAttachments: asyncHandler(async (req, res) => {
     const attachments = await attachmentService.getAllAttachments();
-    res.json(attachments);
+    responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, attachments);
   }),
 
-  getAttachmentById: asyncHandler(async (req, res) => { // Assuming the ID is passed as a URL parameter
+  getAttachmentById: asyncHandler(async (req, res) => {
     const attachmentId = req.params.id;
     const attachment = await attachmentService.getAttachmentById(attachmentId);
     if (attachment) {
-      res.json(attachment);
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, attachment);
     } else {
-      res.status(404).json({ message: 'Attachment not found' });
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.ATTACHMENT_NOT_FOUND);
     }
   }),
 
-  createAttachment: asyncHandler(async (req, res) => { // Assuming attachment data is in the request body
-    const attachmentData = req.body; 
+  createAttachment: asyncHandler(async (req, res) => {
+    const attachmentData = req.body;
     const newAttachment = await attachmentService.createAttachment(attachmentData);
     responseHandler.sendSuccess(res, HTTP_STATUS_CODES.CREATED, RESPONSE_MESSAGES.ATTACHMENT_CREATED_SUCCESS, newAttachment);
   }),
 
-  updateAttachment: asyncHandler(async (req, res) => { // Assuming updated attachment data is in the request body
+  updateAttachment: asyncHandler(async (req, res) => {
     const attachmentId = req.params.id;
     const attachmentData = req.body;
     const updatedAttachment = await attachmentService.updateAttachment(attachmentId, attachmentData);
     if (updatedAttachment) {
-      res.json(updatedAttachment);
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.ATTACHMENT_UPDATED_SUCCESS, updatedAttachment);
     } else {
-      res.status(404).json({ message: 'Attachment not found' });
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.ATTACHMENT_NOT_FOUND);
     }
   }),
 
   deleteAttachment: asyncHandler(async (req, res) => {
     const attachmentId = req.params.id;
-    await attachmentService.deleteAttachment(attachmentId);
-    res.status(204).end();
+    const success = await attachmentService.deleteAttachment(attachmentId);
+    if (success) {
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.NO_CONTENT, RESPONSE_MESSAGES.ATTACHMENT_DELETED_SUCCESS);
+    } else {
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.ATTACHMENT_NOT_FOUND);
+    }
   }),
 };
 

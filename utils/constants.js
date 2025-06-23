@@ -28,12 +28,36 @@ const RESPONSE_MESSAGES = {
   PASSWORD_RESET_SUCCESS: 'Password has been reset successfully.',
   REQUIRED_FIELDS_MISSING: 'Required fields are missing',
   INVALID_TOKEN: 'Invalid token',
+  TOKEN_AND_PASSWORD_REQUIRED: 'Token and new password are required',
+  REFRESH_TOKEN_NOT_FOUND: 'Refresh token not found',
+  OLD_AND_NEW_PASSWORD_REQUIRED: 'Old and new passwords are required',
   // Add messages for other operations (registration, transactions, etc.)
   USER_REGISTERED_SUCCESS: 'User registered successfully',
+  USER_UPDATED_SUCCESS: 'User updated successfully',
+  USER_DELETED_SUCCESS: 'User deleted successfully',
+  USER_NOT_FOUND: 'User not found',
+  AVATAR_UPLOADED_SUCCESS: 'Avatar uploaded successfully',
+  AVATAR_UPDATED_SUCCESS: 'Avatar updated successfully',
   LOGIN_SUCCESS: 'Login successful',
+
+  USER_TOKEN_NOT_FOUND: 'User token not found',
+  USER_TOKEN_CREATED_SUCCESS: 'User token created successfully',
+  USER_TOKEN_UPDATED_SUCCESS: 'User token updated successfully',
+  USER_TOKEN_DELETED_SUCCESS: 'User token deleted successfully',
+
   TRANSACTION_CREATED_SUCCESS: 'Transaction created successfully',
   TRANSACTION_UPDATED_SUCCESS: 'Transaction updated successfully',
   TRANSACTION_DELETED_SUCCESS: 'Transaction deleted successfully',
+  TRANSACTION_NOT_FOUND: 'Transaction not found',
+
+  ACCOUNT_NOT_FOUND: 'Account not found',
+  ACCOUNT_CREATED_SUCCESS: 'Account created successfully',
+  ACCOUNT_UPDATED_SUCCESS: 'Account updated successfully',
+
+  ATTACHMENT_CREATED_SUCCESS: 'Attachment created successfully',
+  ATTACHMENT_UPDATED_SUCCESS: 'Attachment updated successfully',  
+  ATTACHMENT_DELETED_SUCCESS: 'Attachment deleted successfully',
+  ATTACHMENT_NOT_FOUND: 'Attachment not found',
   // ... Add other specific messages here
 };
 

@@ -15,92 +15,90 @@ const register = asyncHandler(async (req, res) => {
   // newUser.profile_picture_url = `https://www.gravatar.com/avatar/?d=retro&s=200&d=identicon&r=g&f=${newUser.firstName.charAt(0).toUpperCase()}`;
   newUser.profile_picture_url = userService.generateDefaultAvatarUrl(newUser.first_name);
 
-  responseHandler.sendSuccess(res, HTTP_STATUS_CODES.CREATED, RESPONSE_MESSAGES.USER_CREATED_SUCCESS, newUser);
+  responseHandler.sendSuccess(res, HTTP_STATUS_CODES.CREATED, RESPONSE_MESSAGES.USER_REGISTERED_SUCCESS, newUser);
 });
 
 // Placeholder controller function for user login
 const login = asyncHandler(async (req, res) => {
-  const {
-    email,
-    password
-  } = req.body;
+  const { email, password } = req.body;
+  
   const tokens = await authService.loginUser(email, password);
-
-  if (!tokens) {
-    return responseHandler.sendError(res, HTTP_STATUS_CODES.UNAUTHORIZED, RESPONSE_MESSAGES.INVALID_CREDENTIALS);
-  }
-
   responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.LOGIN_SUCCESS, tokens);
 });
-// Placeholder controller function for refreshing access token
+
+// FIXED: Placeholder controller function for refreshing access token
 const refreshToken = asyncHandler(async (req, res) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
-    return res.status(401).json({
-      status: 'error',
-      message: RESPONSE_MESSAGES.REFRESH_TOKEN_REQUIRED,
-    });
+    return responseHandler.sendError(res, HTTP_STATUS_CODES.UNAUTHORIZED, RESPONSE_MESSAGES.REFRESH_TOKEN_REQUIRED);
   }
-  const newTokens = await authService.refreshAccessToken(refreshToken); // Assuming refreshAccessToken exists in authService
-  if (!newTokens) {
-    return res.status(403).json({ status: 'error', message: 'Invalid or expired refresh token' });
-  }
- responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, newTokens);
+
+  // Now properly calls the existing refreshAccessToken function which includes verification
+  const newTokens = await authService.refreshAccessToken(refreshToken);
+  responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, newTokens);
 });
 
-// Placeholder controller function for user logout
+// IMPROVED: Placeholder controller function for user logout with better error handling
 const logout = asyncHandler(async (req, res) => {
-  const {
-    refreshToken
-  } = req.body;
+  const { refreshToken } = req.body;
 
   if (!refreshToken) {
     return responseHandler.sendError(res, HTTP_STATUS_CODES.BAD_REQUEST, RESPONSE_MESSAGES.REFRESH_TOKEN_REQUIRED);
   }
+
+  // Optional: Verify token before deletion for better security
+  await authService.verifyRefreshToken(refreshToken);
   const deletedToken = await authService.deleteRefreshToken(refreshToken);
- if (!deletedToken) {
+  
+  if (!deletedToken) {
     return responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.REFRESH_TOKEN_NOT_FOUND);
-  } responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.LOGGED_OUT_SUCCESSFULLY);
+  }
+  
+  responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.LOGGED_OUT_SUCCESSFULLY);
 });
+
 const changePassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   const userId = req.user.user_id; // Assuming user ID is attached to req.user by authMiddleware
 
   if (!oldPassword || !newPassword) {
-    return res.status(400).json({ status: 'error', message: 'Old password and new password are required' });
-  } // TODO: Add validation for oldPassword and newPassword
+    return responseHandler.sendError(res, HTTP_STATUS_CODES.BAD_REQUEST, RESPONSE_MESSAGES.OLD_AND_NEW_PASSWORD_REQUIRED);
+  } 
+  
+  // TODO: Add validation for oldPassword and newPassword
   // TODO: Add more robust validation for password complexity
+  
   await authService.changePassword(userId, oldPassword, newPassword);
   responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.PASSWORD_CHANGE_SUCCESS);
 });
 
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
-  await authService.forgotPassword(email); // Placeholder call // TODO: Add input validation for email format
-  res.status(200).json({
-    status: 'success',
-    message: 'Password reset email sent if user exists.',
-  });
+  
+  if (!email) {
+    return responseHandler.sendError(res, HTTP_STATUS_CODES.BAD_REQUEST, 'Email is required');
+  }
+  
+  // TODO: Add input validation for email format
+  await authService.forgotPassword(email); // Placeholder call
+  responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.PASSWORD_RESET_EMAIL_SENT);
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
   const { token, newPassword } = req.body;
 
   if (!token || !newPassword) {
-    return res.status(400).json({ status: 'error', message: 'Token and new password are required' });
+    return responseHandler.sendError(res, HTTP_STATUS_CODES.BAD_REQUEST, RESPONSE_MESSAGES.TOKEN_AND_PASSWORD_REQUIRED);
   }
 
   // TODO: Add more robust validation for new password complexity
 
   await authService.resetPassword(token, newPassword);
-
-  res.status(200).json({
-    status: 'success',
-    message: 'Password has been reset successfully.',
-  });
+  responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.PASSWORD_RESET_SUCCESS);
 });
-// Google authentication callback
+
+// FIXED: Google authentication callback with proper error handling
 const googleAuthCallback = asyncHandler(async (req, res) => {
   // Passport.js successfully authenticated the user
   // The user information is available in req.user
@@ -127,8 +125,8 @@ const googleAuthCallback = asyncHandler(async (req, res) => {
     }
   }
 
-  // Generate tokens for the user (you'll need a function in authService for this)
-  const tokens = await authService.generateAuthTokens(user); // Assuming generateAuthTokens exists in authService
+  // Generate tokens for the user (now using the fixed function)
+  const tokens = await authService.generateAuthTokens(user);
 
   // Redirect the user to your frontend application with tokens or other relevant info
   // This is a placeholder redirect, adjust as per your frontend setup

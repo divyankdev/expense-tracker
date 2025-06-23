@@ -12,14 +12,14 @@ const userController = {
   getUserById: asyncHandler(async (req, res) => {
     const userId = req.params.id;
     const user = await userService.getUserById(userId);
-    if (user) {      // Add the avatar URL to the response
+    if (user) {
+      // Add the avatar URL to the response
       if (user.avatarPath) {
-        user.profile_picture_url = `${req.protocol}://${req.get('host')}/uploads/${user.avatarPath.split('\\').pop().split('/').pop()}`; // Construct the URL
-            }
-      res.json(user);
+        user.profile_picture_url = `${req.protocol}://${req.get('host')}/uploads/${user.avatarPath.split('\\').pop().split('/').pop()}`;
+      }
       responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, user);
     } else {
-      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.NOT_FOUND);
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.USER_NOT_FOUND);
     }
   }),
 
@@ -28,16 +28,20 @@ const userController = {
     const avatarPath = req.file.path;
     const updatedUser = await userService.uploadAvatar(userId, avatarPath);
     if (updatedUser) {
-      res.json({ message: 'Avatar uploaded successfully', profile_picture_url: `${req.protocol}://${req.get('host')}/uploads/${avatarPath.split('\\').pop().split('/').pop()}` });
+      const responseData = {
+        user: updatedUser,
+        profile_picture_url: `${req.protocol}://${req.get('host')}/uploads/${avatarPath.split('\\').pop().split('/').pop()}`
+      };
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.AVATAR_UPLOADED_SUCCESS, responseData);
     } else {
-      res.status(404).json({ message: 'User not found or avatar upload failed' });
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.USER_NOT_FOUND);
     }
   }),
 
   createUser: asyncHandler(async (req, res) => {
     const userData = req.body;
     const newUser = await userService.createUser(userData);
-    res.status(201).json(newUser);
+    responseHandler.sendSuccess(res, HTTP_STATUS_CODES.CREATED, RESPONSE_MESSAGES.USER_REGISTERED_SUCCESS, newUser);
   }),
 
   updateUser: asyncHandler(async (req, res) => {
@@ -45,14 +49,21 @@ const userController = {
     const userData = req.body;
     const updatedUser = await userService.updateUser(userId, userData);
     if (updatedUser) {
-      res.json(updatedUser);
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.USER_UPDATED_SUCCESS, updatedUser);
     } else {
-      res.status(404).json({ message: 'User not found' });
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.USER_NOT_FOUND);
     }
   }),
 
-  deleteUser: asyncHandler(async (req, res) => {    const userId = req.params.id;    const deletedUser = await userService.deleteUser(userId);    if (deletedUser) {  res.json(deletedUser); // Or res.status(204).send() for no content    
-    } else {      res.status(404).json({ message: 'User not found' });    }  }),
+  deleteUser: asyncHandler(async (req, res) => {
+    const userId = req.params.id;
+    const deletedUser = await userService.deleteUser(userId);
+    if (deletedUser) {
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.USER_DELETED_SUCCESS, deletedUser);
+    } else {
+      responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.USER_NOT_FOUND);
+    }
+  }),
 };
 
-module.exports = userController
+module.exports = userController;
