@@ -3,10 +3,10 @@ const attachmentController = require('../controllers/attachmentController');
 
 const router = express.Router();
 
-router.get('/api/attachments', attachmentController.getAllAttachments);
-router.get('/api/attachments/:id', attachmentController.getAttachmentById);
-router.post('/api/attachments', attachmentController.createAttachment);
-router.put('/api/attachments/:id', attachmentController.updateAttachment);
-router.delete('/api/attachments/:id', attachmentController.deleteAttachment);
+router.get('/', attachmentController.getAllAttachments);
+router.get('/:id', attachmentController.getAttachmentById);
+router.post('', attachmentController.createAttachment);
+router.put('/:id', attachmentController.updateAttachment);
+router.delete('/:id', attachmentController.deleteAttachment);
 
 module.exports = router;

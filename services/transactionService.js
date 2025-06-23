@@ -5,6 +5,7 @@ const { query } = require('../utils/db');
 const getAllTransactions = async () => {
   const sql = 'SELECT * FROM transactions';
   const { rows } = await query(sql);
+  // console.log(rows)
   return rows;
 };
 

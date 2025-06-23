@@ -3,10 +3,10 @@ const transactionController = require('../controllers/transactionController');
 
 const router = express.Router();
 
-router.get('/api/transactions', transactionController.getAllTransactions);
-router.get('/api/transactions/:id', transactionController.getTransactionById);
-router.post('/api/transactions', transactionController.createTransaction);
-router.put('/api/transactions/:id', transactionController.updateTransaction);
-router.delete('/api/transactions/:id', transactionController.deleteTransaction);
+router.get('/', transactionController.getAllTransactions);
+router.get('/:id', transactionController.getTransactionById);
+router.post('/', transactionController.createTransaction);
+router.put('/:id', transactionController.updateTransaction);
+router.delete('/:id', transactionController.deleteTransaction);
 
 module.exports = router;
