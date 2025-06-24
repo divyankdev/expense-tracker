@@ -6,9 +6,15 @@ const responseHandler = require('../utils/responseHandler');
 const { HTTP_STATUS_CODES, RESPONSE_MESSAGES } = require('../utils/constants');
 const userService = require('../services/userService'); // Import userService
 
+// Helper to extract device/session info
+const getDeviceInfo = (req) => req.headers['user-agent'] || null;
+const getIpAddress = (req) => req.ip || req.connection?.remoteAddress || null;
+
 // Placeholder controller function for user registration
 const register = asyncHandler(async (req, res) => {
   const userData = req.body;
+  userData.device_info = getDeviceInfo(req);
+  userData.ip_address = getIpAddress(req);
   const newUser = await authService.registerUser(userData);
   
   // Generate default avatar URL based on first name (example using Gravatar)
@@ -21,8 +27,10 @@ const register = asyncHandler(async (req, res) => {
 // Placeholder controller function for user login
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  const device_info = getDeviceInfo(req);
+  const ip_address = getIpAddress(req);
   
-  const tokens = await authService.loginUser(email, password);
+  const tokens = await authService.loginUser(email, password, device_info, ip_address);
   responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.LOGIN_SUCCESS, tokens);
 });
 
@@ -34,8 +42,12 @@ const refreshToken = asyncHandler(async (req, res) => {
     return responseHandler.sendError(res, HTTP_STATUS_CODES.UNAUTHORIZED, RESPONSE_MESSAGES.REFRESH_TOKEN_REQUIRED);
   }
 
+  const device_info = getDeviceInfo(req);
+  const ip_address = getIpAddress(req);
+
   // Now properly calls the existing refreshAccessToken function which includes verification
-  const newTokens = await authService.refreshAccessToken(refreshToken);
+  console.log('refreshToken', refreshToken);
+  const newTokens = await authService.refreshAccessToken(refreshToken, device_info, ip_address);
   responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, newTokens);
 });
 
@@ -46,10 +58,13 @@ const logout = asyncHandler(async (req, res) => {
   if (!refreshToken) {
     return responseHandler.sendError(res, HTTP_STATUS_CODES.BAD_REQUEST, RESPONSE_MESSAGES.REFRESH_TOKEN_REQUIRED);
   }
+  console.log('[DIVYANK]', refreshToken);
+  const device_info = getDeviceInfo(req);
+  const ip_address = getIpAddress(req);
 
   // Optional: Verify token before deletion for better security
-  await authService.verifyRefreshToken(refreshToken);
-  const deletedToken = await authService.deleteRefreshToken(refreshToken);
+  const decoded = await authService.verifyRefreshToken(refreshToken);
+  const deletedToken = await authService.deleteRefreshToken(refreshToken, decoded.userId);
   
   if (!deletedToken) {
     return responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, RESPONSE_MESSAGES.REFRESH_TOKEN_NOT_FOUND);
@@ -80,8 +95,11 @@ const forgotPassword = asyncHandler(async (req, res) => {
     return responseHandler.sendError(res, HTTP_STATUS_CODES.BAD_REQUEST, 'Email is required');
   }
   
+  const device_info = getDeviceInfo(req);
+  const ip_address = getIpAddress(req);
+  
   // TODO: Add input validation for email format
-  await authService.forgotPassword(email); // Placeholder call
+  await authService.forgotPassword(email, device_info, ip_address);
   responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.PASSWORD_RESET_EMAIL_SENT);
 });
 
@@ -125,8 +143,11 @@ const googleAuthCallback = asyncHandler(async (req, res) => {
     }
   }
 
+  const device_info = getDeviceInfo(req);
+  const ip_address = getIpAddress(req);
+
   // Generate tokens for the user (now using the fixed function)
-  const tokens = await authService.generateAuthTokens(user);
+  const tokens = await authService.generateAuthTokens(user, device_info, ip_address);
 
   // Redirect the user to your frontend application with tokens or other relevant info
   // This is a placeholder redirect, adjust as per your frontend setup

@@ -5,6 +5,8 @@ const userService = require('../services/userService');
 const bcrypt = require('bcrypt'); // Assuming bcrypt is used for password hashing
 
 let testUser; // To store the created test user
+const TEST_USER_AGENT = 'JestTestAgent/1.0';
+const TEST_IP = '123.123.123.123';
 
 describe('Auth Endpoints', () => {
   beforeAll(async () => {
@@ -29,6 +31,8 @@ describe('Auth Endpoints', () => {
     registeredUserEmail = `testuser${Date.now()}@example.com`
     const res = await request(app)
       .post('/api/auth/register')
+      .set('User-Agent', TEST_USER_AGENT)
+      .set('x-forwarded-for', TEST_IP)
       .send({
         first_name: 'Test',
         last_name: 'User',
@@ -51,6 +55,8 @@ describe('Auth Endpoints', () => {
     // In a real test scenario, you would register a user first or use a test database.
     const res = await request(app)
       .post('/api/auth/login')
+      .set('User-Agent', TEST_USER_AGENT)
+      .set('x-forwarded-for', TEST_IP)
       .send({
         email: testUser.email, // Use the created test user's email
         password: 'password123'
@@ -73,6 +79,8 @@ describe('Auth Endpoints', () => {
     }
     const res = await request(app)
       .post('/api/auth/refresh-token')
+      .set('User-Agent', TEST_USER_AGENT)
+      .set('x-forwarded-for', TEST_IP)
       .send({ refreshToken });
 
     expect(res.statusCode).toEqual(200);
@@ -88,6 +96,8 @@ describe('Auth Endpoints', () => {
     }
     const res = await request(app)
       .post('/api/auth/logout')
+      .set('User-Agent', TEST_USER_AGENT)
+      .set('x-forwarded-for', TEST_IP)
       .send({ refreshToken });
 
     expect(res.statusCode).toEqual(200);
@@ -98,6 +108,8 @@ describe('Auth Endpoints', () => {
   it('should handle forgot password request', async () => {
     const res = await request(app)
       .post('/api/auth/forgot-password')
+      .set('User-Agent', TEST_USER_AGENT)
+      .set('x-forwarded-for', TEST_IP)
       .send({ email: testUser.email });
 
     expect(res.statusCode).toEqual(200);
@@ -115,6 +127,8 @@ describe('Auth Endpoints', () => {
 
     const res = await request(app)
       .post('/api/auth/reset-password')
+      .set('User-Agent', TEST_USER_AGENT)
+      .set('x-forwarded-for', TEST_IP)
       .send(resetData);
 
     // This might fail with invalid token, but we're testing the endpoint structure
@@ -125,6 +139,8 @@ describe('Auth Endpoints', () => {
   it('should redirect to Google OAuth', async () => {
     const res = await request(app)
       .get('/api/auth/google')
+      .set('User-Agent', TEST_USER_AGENT)
+      .set('x-forwarded-for', TEST_IP)
       .expect(302); // Expect redirect
 
     // Google OAuth should redirect to Google's authentication page

@@ -6,6 +6,9 @@ const bcrypt = require('bcrypt');
 
 let testUser;
 let testUserToken;
+const TEST_USER_AGENT = 'JestTestAgent/1.0';
+const TEST_IP = '123.123.123.123';
+const TEST_REFRESH_TOKEN = 'testrefreshtoken';
 
 describe('User Token Endpoints', () => {
   beforeAll(async () => {
@@ -24,12 +27,13 @@ describe('User Token Endpoints', () => {
     // NOTE: In a real application, you would likely generate tokens
     // during login/auth flow, not create them directly like this for tests.
     // This is simplified for test data setup.
-    const refreshTokenHash = await bcrypt.hash('testrefreshtoken', 10); // Hash a dummy token
     testUserToken = await userTokenService.createUserToken({
       user_id: testUser.user_id,
-      refresh_token_hash: refreshTokenHash, // Store the hashed token
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Expires in 7 days
-      token_type: 'refresh', // Or whatever token types you have
+      refresh_token: TEST_REFRESH_TOKEN,
+      token_type: 'refresh',
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      device_info: TEST_USER_AGENT,
+      ip_address: TEST_IP,
       is_active: true,
     });
   });
@@ -69,9 +73,11 @@ describe('User Token Endpoints', () => {
   it('should create a new user token', async () => {
     const newTokenData = {
       user_id: testUser.user_id,
-      refresh_token_hash: await bcrypt.hash('newrefreshtoken', 10),
-      expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
+      refresh_token: 'newrefreshtoken',
       token_type: 'refresh',
+      expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      device_info: TEST_USER_AGENT,
+      ip_address: TEST_IP,
       is_active: true,
     };
 
@@ -100,6 +106,8 @@ describe('User Token Endpoints', () => {
     const updatedTokenData = {
       is_active: false,
       expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      device_info: TEST_USER_AGENT,
+      ip_address: TEST_IP,
     };
 
     const res = await request(app)
