@@ -1,7 +1,7 @@
 const request = require('supertest');
 const app = require('../server'); // Assuming your Express app is exported from server.js
-const userService = require('../../services/userService');
-const categoryService = require('../../services/categoryService');
+const userService = require('../services/userService');
+const categoryService = require('../services/categoryService');
 const bcrypt = require('bcrypt');
 
 let testUser;
@@ -28,7 +28,7 @@ describe('Category Endpoints', () => {
     testCategory = await categoryService.createCategory({
       user_id: testUser.user_id,
       category_name: 'Test Category',
-      category_type: 'Expense', // Or 'Income'
+      category_type: 'expense', // Or 'Income'
     });
   });
 
@@ -95,7 +95,7 @@ describe('Category Endpoints', () => {
 
     const updatedCategoryData = {
       category_name: 'Updated Test Category',
-      category_type: 'Expense', // Keep the same type or change it
+      category_type: 'expense', // Keep the same type or change it
     };
 
     const res = await request(app)

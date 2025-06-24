@@ -1,7 +1,7 @@
 const request = require('supertest');
 const app = require('../server'); // Assuming your Express app is exported from server.js
-const userService = require('../../services/userService');
-const accountService = require('../../services/accountService');
+const userService = require('../services/userService');
+const accountService = require('../services/accountService');
 const bcrypt = require('bcrypt');
 
 let testUser;
@@ -24,7 +24,7 @@ describe('Account Endpoints', () => {
     testAccount = await accountService.createAccount({
       user_id: testUser.user_id,
       account_name: 'Test Account',
-      account_type: 'Checking',
+      account_type: 'bank_account',
       initial_balance: 1000,
       current_balance: 1000,
     });
@@ -70,7 +70,7 @@ describe('Account Endpoints', () => {
     const newAccountData = {
       user_id: testUser.user_id,
       account_name: 'New Test Account',
-      account_type: 'Savings',
+      account_type: 'bank_account',
       initial_balance: 500,
       current_balance: 500,
     };
@@ -100,7 +100,7 @@ describe('Account Endpoints', () => {
     const updatedAccountData = {
       user_id: testUser.user_id,
       account_name: 'Updated Test Account Name',
-      account_type: 'Checking', // Can keep same or change
+      account_type: 'bank_account', // Can keep same or change
       initial_balance: 1000,
       current_balance: 1200, // Simulate a transaction
     };

@@ -1,10 +1,10 @@
 const request = require('supertest');
 const app = require('../server'); // Assuming your Express app is exported from server.js
-const userService = require('../../services/userService');
-const budgetService = require('../../services/budgetService');
+const userService = require('../services/userService');
+const budgetService = require('../services/budgetService');
 const bcrypt = require('bcrypt');
-const { HTTP_STATUS_CODES } = require('../../utils/constants'); // Import status codes
-const { RESPONSE_MESSAGES } = require('../../utils/constants'); // Import messages
+const { HTTP_STATUS_CODES } = require('../utils/constants'); // Import status codes
+const { RESPONSE_MESSAGES } = require('../utils/constants'); // Import messages
 
 let testUser;
 let testBudget;

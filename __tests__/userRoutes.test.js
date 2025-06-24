@@ -1,7 +1,8 @@
 const request = require('supertest');
 const app = require('../server'); // Assuming your Express app is exported from server.js
-const userService = require('../../services/userService');
+const userService = require('../services/userService');
 const bcrypt = require('bcrypt'); // Assuming bcrypt is used for password hashing
+const path = require('path');
 
 let testUser; // To store the created test user
 
@@ -56,7 +57,7 @@ describe('User Endpoints', () => {
   it('should create a new user', async () => {
     const newUserData = {
       email: `newuser${Date.now()}@example.com`,
-      password: 'password123',
+      password_hash: await bcrypt.hash('password123', 10),
       first_name: 'New',
       last_name: 'User',
       phone_number: null,
@@ -89,7 +90,10 @@ describe('User Endpoints', () => {
     const updatedUserData = {
       first_name: 'Updated',
       last_name: 'User',
-      phone_number: '1234567890'
+      phone_number: '1234567890',
+      email: testUser.email,
+      password_hash: await bcrypt.hash('password123', 10),
+      date_of_birth: null,
     };
 
     const res = await request(app)
@@ -104,6 +108,26 @@ describe('User Endpoints', () => {
     expect(res.body.data.phone_number).toEqual(updatedUserData.phone_number);
   });
 
+  it('should upload a user avatar', async () => {
+    // Ensure the testUser was created successfully in beforeAll
+    if (!testUser || !testUser.user_id) {
+      throw new Error('Test user not created for avatar upload test.');
+    }
+
+    // Placeholder for file upload logic with supertest .attach()
+    // You'll need to replace 'path/to/your/test/image.jpg' with the actual path
+    // to a small test image file and 'avatar' with the field name expected by your upload middleware.
+    const imagePath = path.resolve(__dirname, '../public/profile.png');
+    const res = await request(app)
+      .post(`/api/profile/${testUser.user_id}/avatar`)
+      .attach('avatar', imagePath); // Uncomment and configure for file upload
+      // .send({}); // Remove this .send({}) when using .attach()
+
+    expect(res.statusCode).toEqual(200); // Or whatever status code your uploadAvatar endpoint returns on success
+    expect(res.body).toHaveProperty('status', 'success');
+    expect(res.body.data).toHaveProperty('profile_picture_url'); // Assert that the response includes the new avatar URL
+  });
+  
   it('should delete a user by ID', async () => {
     if (!testUser || !testUser.user_id) {
       throw new Error('Test user not created for DELETE by ID test.');
@@ -120,22 +144,5 @@ describe('User Endpoints', () => {
   // Add more tests for other user endpoints:
   // - PUT /api/profile/:id
 
-  it('should upload a user avatar', async () => {
-    // Ensure the testUser was created successfully in beforeAll
-    if (!testUser || !testUser.user_id) {
-      throw new Error('Test user not created for avatar upload test.');
-    }
-
-    // Placeholder for file upload logic with supertest .attach()
-    // You'll need to replace 'path/to/your/test/image.jpg' with the actual path
-    // to a small test image file and 'avatar' with the field name expected by your upload middleware.
-    const res = await request(app)
-      .post(`/api/profile/${testUser.user_id}/avatar`)
-      // .attach('avatar', 'path/to/your/test/image.jpg'); // Uncomment and configure for file upload
-      .send({}); // Remove this .send({}) when using .attach()
-
-    expect(res.statusCode).toEqual(200); // Or whatever status code your uploadAvatar endpoint returns on success
-    expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('profile_picture_url'); // Assert that the response includes the new avatar URL
-  });
+  
 });

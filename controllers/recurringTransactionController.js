@@ -28,6 +28,7 @@ const createRecurringTransaction = asyncHandler(async (req, res) => {
 });
 
 const updateRecurringTransaction = asyncHandler(async (req, res) => {
+  console.log('User: ',req.user)
   const updatedRecurringTransaction = await recurringTransactionService.updateRecurringTransaction(req.params.id, req.body);
   if (updatedRecurringTransaction) {
     responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, updatedRecurringTransaction);

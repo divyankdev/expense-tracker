@@ -1,10 +1,10 @@
 const request = require('supertest');
 const app = require('../server'); // Assuming your Express app is exported from server.js
-const userService = require('../../services/userService');
-const transactionService = require('../../services/transactionService');
-const accountService = require('../../services/accountService');
-const categoryService = require('../../services/categoryService');
-const attachmentService = require('../../services/attachmentService');
+const userService = require('../services/userService');
+const transactionService = require('../services/transactionService');
+const accountService = require('../services/accountService');
+const categoryService = require('../services/categoryService');
+const attachmentService = require('../services/attachmentService');
 const bcrypt = require('bcrypt');
 
 let testUser;
@@ -32,7 +32,7 @@ describe('Attachment Endpoints', () => {
          user_id: testUser.user_id,
  // Add other necessary account fields with dummy data
          account_name: 'Test Account',
-         account_type: 'Checking',
+         account_type: 'bank_account',
          initial_balance: 1000,
          current_balance: 1000,
      });
@@ -41,7 +41,7 @@ describe('Attachment Endpoints', () => {
  // Add other necessary category fields with dummy data
          user_id: testUser.user_id,
          category_name: 'Test Category',
-         category_type: 'Expense',
+         category_type: 'expense',
      });
 
     testTransaction = await transactionService.createTransaction({
@@ -49,7 +49,7 @@ describe('Attachment Endpoints', () => {
       account_id: testAccount.account_id, // Link to test account
       category_id: testCategory.category_id, // Link to test category
       amount: 50,
-      transaction_type: 'Expense',
+      transaction_type: 'expense',
       description: 'Transaction with attachment',
       transaction_date: new Date().toISOString(),
     });

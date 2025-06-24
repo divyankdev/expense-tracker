@@ -23,6 +23,7 @@ const createRecurringTransaction = async (recurringTransactionData) => {
 };
 
 const updateRecurringTransaction = async (id, recurringTransactionData) => {
+  
   const { user_id, account_id, category_id, amount, frequency, next_due_date, description, is_active } = recurringTransactionData;
   const sql = 'UPDATE recurring_transactions SET user_id = $1, account_id = $2, category_id = $3, amount = $4, frequency = $5, next_due_date = $6, description = $7, is_active = $8, updated_at = CURRENT_TIMESTAMP WHERE recurring_id = $9 RETURNING *';
   const values = [user_id, account_id, category_id, amount, frequency, next_due_date, description, is_active, id];

@@ -1,7 +1,7 @@
 const request = require('supertest');
-const app = require('../server.js'); // Assuming your Express app is exported from server.js
-const { RESPONSE_MESSAGES } = require('../../utils/constants'); // Import constants
-const userService = require('../../services/userService');
+const app = require('../server'); // Assuming your Express app is exported from server.js
+const { RESPONSE_MESSAGES } = require('../utils/constants'); // Import constants
+const userService = require('../services/userService');
 const bcrypt = require('bcrypt'); // Assuming bcrypt is used for password hashing
 
 let testUser; // To store the created test user
