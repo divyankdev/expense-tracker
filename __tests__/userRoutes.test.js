@@ -44,6 +44,79 @@ describe('User Endpoints', () => {
     // Add more assertions based on the expected response body
   });
 
+  it('should get all users', async () => {
+    const res = await request(app).get('/api/profile');
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('status', 'success');
+    expect(res.body.data).toBeInstanceOf(Array);
+    // Add more specific assertions about the returned users
+  });
+
+  it('should create a new user', async () => {
+    const newUserData = {
+      email: `newuser${Date.now()}@example.com`,
+      password: 'password123',
+      first_name: 'New',
+      last_name: 'User',
+      phone_number: null,
+      date_of_birth: null,
+      profile_picture_url: null
+    };
+
+    const res = await request(app)
+      .post('/api/profile')
+      .send(newUserData);
+
+    expect(res.statusCode).toEqual(201);
+    expect(res.body).toHaveProperty('status', 'success');
+    expect(res.body.data).toHaveProperty('user_id');
+    expect(res.body.data.email).toEqual(newUserData.email);
+    expect(res.body.data.first_name).toEqual(newUserData.first_name);
+    expect(res.body.data.last_name).toEqual(newUserData.last_name);
+
+    // Clean up the created user
+    if (res.body.data && res.body.data.user_id) {
+      await userService.deleteUser(res.body.data.user_id);
+    }
+  });
+
+  it('should update a user by ID', async () => {
+    if (!testUser || !testUser.user_id) {
+      throw new Error('Test user not created for PUT by ID test.');
+    }
+
+    const updatedUserData = {
+      first_name: 'Updated',
+      last_name: 'User',
+      phone_number: '1234567890'
+    };
+
+    const res = await request(app)
+      .put(`/api/profile/${testUser.user_id}`)
+      .send(updatedUserData);
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('status', 'success');
+    expect(res.body.data).toHaveProperty('user_id', testUser.user_id);
+    expect(res.body.data.first_name).toEqual(updatedUserData.first_name);
+    expect(res.body.data.last_name).toEqual(updatedUserData.last_name);
+    expect(res.body.data.phone_number).toEqual(updatedUserData.phone_number);
+  });
+
+  it('should delete a user by ID', async () => {
+    if (!testUser || !testUser.user_id) {
+      throw new Error('Test user not created for DELETE by ID test.');
+    }
+
+    const res = await request(app).delete(`/api/profile/${testUser.user_id}`);
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('status', 'success');
+    // Clear testUser after deletion
+    testUser = null;
+  });
+
   // Add more tests for other user endpoints:
   // - PUT /api/profile/:id
 

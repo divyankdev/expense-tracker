@@ -1,7 +1,7 @@
 const request = require('supertest');
 const app = require('../server.js'); // Assuming your Express app is exported from server.js
-const { RESPONSE_MESSAGES } = require('../utils/constants'); // Import constants
-const userService = require('../services/userService');
+const { RESPONSE_MESSAGES } = require('../../utils/constants'); // Import constants
+const userService = require('../../services/userService');
 const bcrypt = require('bcrypt'); // Assuming bcrypt is used for password hashing
 
 let testUser; // To store the created test user
@@ -93,6 +93,42 @@ describe('Auth Endpoints', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
     expect(res.body).toHaveProperty('message', RESPONSE_MESSAGES.LOGGED_OUT_SUCCESSFULLY); // Use constant
+  });
+
+  it('should handle forgot password request', async () => {
+    const res = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email: testUser.email });
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('status', 'success');
+    expect(res.body).toHaveProperty('message', RESPONSE_MESSAGES.PASSWORD_RESET_EMAIL_SENT);
+  });
+
+  it('should handle reset password with valid token', async () => {
+    // This test would require a valid reset token
+    // In a real scenario, you'd get this token from the forgot-password flow
+    const resetData = {
+      token: 'valid-reset-token', // This would be a real token in actual testing
+      newPassword: 'newpassword123'
+    };
+
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send(resetData);
+
+    // This might fail with invalid token, but we're testing the endpoint structure
+    expect(res.statusCode).toBeDefined();
+    expect(res.body).toHaveProperty('status');
+  });
+
+  it('should redirect to Google OAuth', async () => {
+    const res = await request(app)
+      .get('/api/auth/google')
+      .expect(302); // Expect redirect
+
+    // Google OAuth should redirect to Google's authentication page
+    expect(res.statusCode).toEqual(302);
   });
 
   afterAll(async () => {

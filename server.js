@@ -15,7 +15,8 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const recurringTransactionRoutes = require('./routes/recurringTransactionRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes')
+const userRoutes = require('./routes/userRoutes');
+const userTokenRoutes = require('./routes/userTokenRoutes');
 
 // Database connection pool
 async function testDbConnection() {
@@ -56,7 +57,8 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/recurring-transactions', recurringTransactionRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
-app.use('/api/profile/',userRoutes);
+app.use('/api/profile', userRoutes);
+app.use('/api/user-tokens', userTokenRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello, world!');

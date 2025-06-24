@@ -10,6 +10,8 @@ const bcrypt = require('bcrypt');
 let testUser;
 let testTransaction;
 let testAttachment; // To store a test attachment if needed for specific tests
+let testAccount;
+let testCategory;
 
 describe('Attachment Endpoints', () => {
   beforeAll(async () => {
@@ -26,7 +28,7 @@ describe('Attachment Endpoints', () => {
 
     // Create a test transaction for the user (attachments are linked to transactions)
     // This requires account and category
-    const testAccount = await accountService.createAccount({
+    testAccount = await accountService.createAccount({
          user_id: testUser.user_id,
  // Add other necessary account fields with dummy data
          account_name: 'Test Account',
@@ -35,7 +37,7 @@ describe('Attachment Endpoints', () => {
          current_balance: 1000,
      });
 
-     const testCategory = await categoryService.createCategory({
+     testCategory = await categoryService.createCategory({
  // Add other necessary category fields with dummy data
          user_id: testUser.user_id,
          category_name: 'Test Category',
@@ -73,17 +75,15 @@ describe('Attachment Endpoints', () => {
     if (testTransaction && testTransaction.transaction_id) {
       await transactionService.deleteTransaction(testTransaction.transaction_id);
     }
+    if (testAccount && testAccount.account_id) {
+      await accountService.deleteAccount(testAccount.account_id);
+    }
+    if (testCategory && testCategory.category_id) {
+      await categoryService.deleteCategory(testCategory.category_id);
+    }
     if (testUser && testUser.user_id) {
       await userService.deleteUser(testUser.user_id);
     }
- // Clean up account and category created in beforeAll
- // This assumes account and category are only needed for transaction creation in this test suite
- if (beforeAll.testAccount && beforeAll.testAccount.account_id) {
- await accountService.deleteAccount(beforeAll.testAccount.account_id);
- }
- if (beforeAll.testCategory && beforeAll.testCategory.category_id) {
- await categoryService.deleteCategory(beforeAll.testCategory.category_id);
- }
   });
 
   it('should get all attachments', async () => {

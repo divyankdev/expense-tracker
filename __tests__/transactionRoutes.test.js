@@ -1,9 +1,9 @@
 const request = require('supertest');
 const app = require('../server'); // Assuming your Express app is exported from server.js
-const userService = require('../services/userService');
-const accountService = require('../services/accountService');
-const categoryService = require('../services/categoryService');
-const transactionService = require('../services/transactionService');
+const userService = require('../../services/userService');
+const accountService = require('../../services/accountService');
+const categoryService = require('../../services/categoryService');
+const transactionService = require('../../services/transactionService');
 const bcrypt = require('bcrypt');
 
 let testUser;
