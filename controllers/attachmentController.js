@@ -20,14 +20,29 @@ const attachmentController = {
   }),
 
   createAttachment: asyncHandler(async (req, res) => {
-    const attachmentData = req.body;
+    const attachmentData = {
+      transaction_id: req.params.transaction_id,
+      file_name: req.file.originalname,
+      file_type: req.file.mimetype,
+      file_path: req.file.path,
+      file_size: req.file.size,
+    };
+    if (req.user && req.user.user_id) {
+      attachmentData.user_id = req.user.user_id;
+    }
     const newAttachment = await attachmentService.createAttachment(attachmentData);
     responseHandler.sendSuccess(res, HTTP_STATUS_CODES.CREATED, RESPONSE_MESSAGES.ATTACHMENT_CREATED_SUCCESS, newAttachment);
   }),
 
   updateAttachment: asyncHandler(async (req, res) => {
     const attachmentId = req.params.id;
-    const attachmentData = req.body;
+    const attachmentData = {
+      transaction_id: req.params.transaction_id,
+      file_name: req.file.originalname,
+      file_type: req.file.mimetype,
+      file_path: req.file.path,
+      file_size: req.file.size,
+    };
     const updatedAttachment = await attachmentService.updateAttachment(attachmentId, attachmentData);
     if (updatedAttachment) {
       responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.ATTACHMENT_UPDATED_SUCCESS, updatedAttachment);

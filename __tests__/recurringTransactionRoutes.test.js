@@ -10,6 +10,7 @@ let testUser;
 let testAccount;
 let testCategory;
 let testRecurringTransaction;
+let accessToken;
 
 describe('Recurring Transaction Endpoints', () => {
   beforeAll(async () => {
@@ -23,6 +24,12 @@ describe('Recurring Transaction Endpoints', () => {
       first_name: 'Recurring',
       last_name: 'User',
     });
+
+    // Login to get accessToken
+    const loginRes = await request(app)
+      .post('/api/auth/login')
+      .send({ email, password });
+    accessToken = loginRes.body.data.accessToken;
 
     // Create a test account for the user
     testAccount = await accountService.createAccount({
@@ -72,7 +79,9 @@ describe('Recurring Transaction Endpoints', () => {
   });
 
   it('should get all recurring transactions', async () => {
-    const res = await request(app).get('/api/recurring-transactions'); // Assuming your recurring transaction routes are under /api/recurring-transactions
+    const res = await request(app)
+      .get('/api/recurring-transactions')
+      .set('Authorization', `Bearer ${accessToken}`);
     expect(res.statusCode).toEqual(200); // Or whatever status code your getAllRecurringTransactions endpoint returns on success
     expect(res.body).toHaveProperty('status', 'success');
     expect(res.body.data).toBeInstanceOf(Array);
@@ -85,7 +94,9 @@ describe('Recurring Transaction Endpoints', () => {
       throw new Error('Test recurring transaction not created for GET by ID test.');
     }
     console.log(testRecurringTransaction);
-    const res = await request(app).get(`/api/recurring-transactions/${testRecurringTransaction.recurring_id}`);
+    const res = await request(app)
+      .get(`/api/recurring-transactions/${testRecurringTransaction.recurring_id}`)
+      .set('Authorization', `Bearer ${accessToken}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
@@ -110,6 +121,7 @@ describe('Recurring Transaction Endpoints', () => {
 
     const res = await request(app)
       .post('/api/recurring-transactions')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send(newRecurringTransactionData);
 
     expect(res.statusCode).toEqual(201); // Assuming 201 Created
@@ -147,6 +159,7 @@ describe('Recurring Transaction Endpoints', () => {
 
     const res = await request(app)
       .put(`/api/recurring-transactions/${testRecurringTransaction.recurring_id}`)
+      .set('Authorization', `Bearer ${accessToken}`)
       .send(updatedRecurringTransactionData);
 
     expect(res.statusCode).toEqual(200); // Assuming 200 OK
@@ -165,7 +178,9 @@ describe('Recurring Transaction Endpoints', () => {
 
     const recurringTransactionIdToDelete = testRecurringTransaction.recurring_id;
 
-    const res = await request(app).delete(`/api/recurring-transactions/${recurringTransactionIdToDelete}`);
+    const res = await request(app)
+      .delete(`/api/recurring-transactions/${recurringTransactionIdToDelete}`)
+      .set('Authorization', `Bearer ${accessToken}`);
 
     expect(res.statusCode).toEqual(200); // Assuming 200 OK or 204 No Content
     expect(res.body).toHaveProperty('status', 'success');

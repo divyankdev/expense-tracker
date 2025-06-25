@@ -44,15 +44,15 @@ const accountService = {
    */
   async createAccount(accountData) {
     try {
-      console.log('Creating new account:', accountData);
+      // console.log('Creating new account:', accountData);
       const sql = 'INSERT INTO accounts (account_name, account_type, current_balance, user_id) VALUES ($1, $2, $3, $4) RETURNING *';
       const values = [
- accountData.account_name,
- accountData.account_type,
-//  accountData.initial_balance,
- accountData.current_balance, // Assuming current_balance is provided or calculated
-//  accountData.currency,
- accountData.user_id, // Assuming user_id is in accountData
+        accountData.account_name,
+        accountData.account_type,
+        //  accountData.initial_balance,
+        accountData.current_balance, // Assuming current_balance is provided or calculated
+        //  accountData.currency,
+        accountData.user_id, // Assuming user_id is in accountData
       ];
       const { rows } = await query(sql, values);
  return rows[0]; // Return the newly created account

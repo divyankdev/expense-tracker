@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 
 let testUser;
 let testCategory;
+let accessToken;
 
 describe('Category Endpoints', () => {
   beforeAll(async () => {
@@ -24,11 +25,17 @@ describe('Category Endpoints', () => {
       profile_picture_url: null,
     });
 
+    // Login to get accessToken
+    const loginRes = await request(app)
+      .post('/api/auth/login')
+      .send({ email, password });
+    accessToken = loginRes.body.data.accessToken;
+
     // Create a test category for the user
     testCategory = await categoryService.createCategory({
       user_id: testUser.user_id,
       category_name: 'Test Category',
-      category_type: 'expense', // Or 'Income'
+      category_type: 'expense', // Or 'income'
     });
   });
 
@@ -43,7 +50,9 @@ describe('Category Endpoints', () => {
   });
 
   it('should get all categories', async () => {
-    const res = await request(app).get('/api/categories'); // Assuming your category routes are under /api/categories
+    const res = await request(app)
+      .get('/api/categories')
+      .set('Authorization', `Bearer ${accessToken}`);
     expect(res.statusCode).toEqual(200); // Or whatever status code your getAllCategories endpoint returns on success
     expect(res.body).toHaveProperty('status', 'success');
     expect(res.body.data).toBeInstanceOf(Array);
@@ -52,10 +61,12 @@ describe('Category Endpoints', () => {
 
   it('should get a category by ID', async () => {
     if (!testCategory || !testCategory.category_id) {
- throw new Error('Test category not created for GET by ID test.');
+      throw new Error('Test category not created for GET by ID test.');
     }
 
-    const res = await request(app).get(`/api/categories/${testCategory.category_id}`);
+    const res = await request(app)
+      .get(`/api/categories/${testCategory.category_id}`)
+      .set('Authorization', `Bearer ${accessToken}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
@@ -68,11 +79,12 @@ describe('Category Endpoints', () => {
     const newCategoryData = {
       user_id: testUser.user_id,
       category_name: 'New Test Category',
-      category_type: 'Income',
+      category_type: 'income',
     };
 
     const res = await request(app)
       .post('/api/categories')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send(newCategoryData);
 
     expect(res.statusCode).toEqual(201);
@@ -90,7 +102,7 @@ describe('Category Endpoints', () => {
 
   it('should update a category by ID', async () => {
     if (!testCategory || !testCategory.category_id) {
- throw new Error('Test category not created for PUT by ID test.');
+      throw new Error('Test category not created for PUT by ID test.');
     }
 
     const updatedCategoryData = {
@@ -100,6 +112,7 @@ describe('Category Endpoints', () => {
 
     const res = await request(app)
       .put(`/api/categories/${testCategory.category_id}`)
+      .set('Authorization', `Bearer ${accessToken}`)
       .send(updatedCategoryData);
 
     expect(res.statusCode).toEqual(200);
@@ -112,12 +125,14 @@ describe('Category Endpoints', () => {
 
   it('should delete a category by ID', async () => {
     if (!testCategory || !testCategory.category_id) {
- throw new Error('Test category not created for DELETE by ID test.');
+      throw new Error('Test category not created for DELETE by ID test.');
     }
 
     const categoryIdToDelete = testCategory.category_id;
 
-    const res = await request(app).delete(`/api/categories/${categoryIdToDelete}`);
+    const res = await request(app)
+      .delete(`/api/categories/${categoryIdToDelete}`)
+      .set('Authorization', `Bearer ${accessToken}`);
 
     expect(res.statusCode).toEqual(200); // Or 204 if your delete returns no content
     expect(res.body).toHaveProperty('status', 'success');

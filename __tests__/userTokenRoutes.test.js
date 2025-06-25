@@ -9,6 +9,7 @@ let testUserToken;
 const TEST_USER_AGENT = 'JestTestAgent/1.0';
 const TEST_IP = '123.123.123.123';
 const TEST_REFRESH_TOKEN = 'testrefreshtoken';
+let accessToken;
 
 describe('User Token Endpoints', () => {
   beforeAll(async () => {
@@ -22,6 +23,12 @@ describe('User Token Endpoints', () => {
       first_name: 'UserToken',
       last_name: 'User',
     });
+
+    // Login to get accessToken
+    const loginRes = await request(app)
+      .post('/api/auth/login')
+      .send({ email, password });
+    accessToken = loginRes.body.data.accessToken;
 
     // Create a test user token for the user
     // NOTE: In a real application, you would likely generate tokens
@@ -49,7 +56,9 @@ describe('User Token Endpoints', () => {
   });
 
   it('should get all user tokens', async () => {
-    const res = await request(app).get('/api/user-tokens'); // Assuming your user token routes are under /api/user-tokens
+    const res = await request(app)
+      .get('/api/user-tokens')
+      .set('Authorization', `Bearer ${accessToken}`);
     expect(res.statusCode).toEqual(200); // Or whatever status code your getAllUserTokens endpoint returns on success
     expect(res.body).toHaveProperty('status', 'success');
     expect(res.body.data).toBeInstanceOf(Array);
@@ -61,7 +70,9 @@ describe('User Token Endpoints', () => {
       throw new Error('Test user token not created for GET by ID test.');
     }
 
-    const res = await request(app).get(`/api/user-tokens/${testUserToken.token_id}`);
+    const res = await request(app)
+      .get(`/api/user-tokens/${testUserToken.token_id}`)
+      .set('Authorization', `Bearer ${accessToken}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
@@ -83,6 +94,7 @@ describe('User Token Endpoints', () => {
 
     const res = await request(app)
       .post('/api/user-tokens')
+      .set('Authorization', `Bearer ${accessToken}`)
       .send(newTokenData);
 
     expect(res.statusCode).toEqual(201);
@@ -112,6 +124,7 @@ describe('User Token Endpoints', () => {
 
     const res = await request(app)
       .put(`/api/user-tokens/${testUserToken.token_id}`)
+      .set('Authorization', `Bearer ${accessToken}`)
       .send(updatedTokenData);
 
     expect(res.statusCode).toEqual(200);
@@ -128,7 +141,9 @@ describe('User Token Endpoints', () => {
 
     const tokenIdToDelete = testUserToken.token_id;
 
-    const res = await request(app).delete(`/api/user-tokens/${tokenIdToDelete}`);
+    const res = await request(app)
+      .delete(`/api/user-tokens/${tokenIdToDelete}`)
+      .set('Authorization', `Bearer ${accessToken}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');

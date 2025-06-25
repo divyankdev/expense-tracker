@@ -26,6 +26,8 @@ const categoryController = {
 
   updateCategory: asyncHandler(async (req, res, next) => {
     const categoryId = req.params.id;
+    console.log('User12345: ',req.user)
+    req.body.user_id = req.user.userId;
     const updatedCategory = await categoryService.updateCategory(categoryId, req.body);
     if (updatedCategory) {
       responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, updatedCategory);

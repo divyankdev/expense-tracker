@@ -4,6 +4,7 @@ const responseHandler = require('../utils/responseHandler');
 const { HTTP_STATUS_CODES, RESPONSE_MESSAGES } = require('../utils/constants');
 
 const getAllRecurringTransactions = asyncHandler(async (req, res) => {
+  console.log('User12345: ',req.user)
   const recurringTransactions = await recurringTransactionService.getAllRecurringTransactions();
   responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, recurringTransactions);
 });

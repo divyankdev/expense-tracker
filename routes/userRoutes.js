@@ -2,6 +2,7 @@ const express = require('express');
 const userController = require('../controllers/userController');
 const multer = require('multer');
 const path = require('path');
+const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -25,12 +26,12 @@ router.get('/:id', userController.getUserById);
 router.post('', userController.createUser);
 
 // UPDATE a user by ID
-router.put('/:id', userController.updateUser);
+router.put('/:id', protect, userController.updateUser);
 
 // DELETE a user by ID
-router.delete('/:id', userController.deleteUser);
+router.delete('/:id', protect, userController.deleteUser);
 
 // POST upload user avatar
-router.post('/:id/avatar', upload.single('avatar'), userController.uploadAvatar);
+router.post('/:id/avatar', protect, upload.single('avatar'), userController.uploadAvatar);
 
 module.exports = router;

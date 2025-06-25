@@ -12,7 +12,7 @@ const budgetController = {
   getBudgetById: asyncHandler(async (req, res) => {
     const budgetId = req.params.id;
     // Fix: Corrected variable name from budId to budgetId
-    const budget = await budgetService.getBudgetById(budId);
+    const budget = await budgetService.getBudgetById(budgetId);
     if (budget) {
       responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, budget);
     } else {
@@ -27,6 +27,7 @@ const budgetController = {
 
   updateBudget: asyncHandler(async (req, res) => {
     const budgetId = req.params.id;
+    req.body.user_id = req.user.userId;
     const updatedBudget = await budgetService.updateBudget(budgetId, req.body);
     if (updatedBudget) {
       responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, updatedBudget);

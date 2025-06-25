@@ -1,21 +1,22 @@
 const express = require('express');
 const recurringTransactionController = require('../controllers/recurringTransactionController');
+const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 // GET all recurring transactions
-router.get('/', recurringTransactionController.getAllRecurringTransactions);
+router.get('/', protect, recurringTransactionController.getAllRecurringTransactions);
 
 // GET a single recurring transaction by ID
-router.get('/:id', recurringTransactionController.getRecurringTransactionById);
+router.get('/:id', protect, recurringTransactionController.getRecurringTransactionById);
 
 // CREATE a new recurring transaction
-router.post('/', recurringTransactionController.createRecurringTransaction);
+router.post('/', protect, recurringTransactionController.createRecurringTransaction);
 
 // UPDATE a recurring transaction by ID
-router.put('/:id', recurringTransactionController.updateRecurringTransaction);
+router.put('/:id', protect, recurringTransactionController.updateRecurringTransaction);
 
 // DELETE a recurring transaction by ID
-router.delete('/:id', recurringTransactionController.deleteRecurringTransaction);
+router.delete('/:id', protect, recurringTransactionController.deleteRecurringTransaction);
 
 module.exports = router;

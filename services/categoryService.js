@@ -27,6 +27,7 @@ const categoryService = {
 
   updateCategory: async (categoryId, categoryData) => {
     // Placeholder for updating a category in the database
+    console.log('Category Data: ', categoryData);
     const { user_id, parent_category_id, category_name, category_type, color, icon } = categoryData;
     const sql = 'UPDATE categories SET user_id = $1, parent_category_id = $2, category_name = $3, category_type = $4, color = $5, icon = $6, updated_at = CURRENT_TIMESTAMP WHERE category_id = $7 RETURNING *';
     const values = [user_id, parent_category_id, category_name, category_type, color, icon, categoryId];

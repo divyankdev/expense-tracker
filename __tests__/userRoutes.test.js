@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt'); // Assuming bcrypt is used for password hashin
 const path = require('path');
 
 let testUser; // To store the created test user
+let accessToken;
 
 describe('User Endpoints', () => {
   beforeAll(async () => {
@@ -22,6 +23,11 @@ describe('User Endpoints', () => {
       date_of_birth: null,
       profile_picture_url: null
     });
+    // Login to get accessToken
+    const loginRes = await request(app)
+      .post('/api/auth/login')
+      .send({ email, password });
+    accessToken = loginRes.body.data.accessToken;
   });
 
   afterAll(async () => {
@@ -98,6 +104,7 @@ describe('User Endpoints', () => {
 
     const res = await request(app)
       .put(`/api/profile/${testUser.user_id}`)
+      .set('Authorization', `Bearer ${accessToken}`)
       .send(updatedUserData);
 
     expect(res.statusCode).toEqual(200);
@@ -120,6 +127,7 @@ describe('User Endpoints', () => {
     const imagePath = path.resolve(__dirname, '../public/profile.png');
     const res = await request(app)
       .post(`/api/profile/${testUser.user_id}/avatar`)
+      .set('Authorization', `Bearer ${accessToken}`)
       .attach('avatar', imagePath); // Uncomment and configure for file upload
       // .send({}); // Remove this .send({}) when using .attach()
 
@@ -133,7 +141,9 @@ describe('User Endpoints', () => {
       throw new Error('Test user not created for DELETE by ID test.');
     }
 
-    const res = await request(app).delete(`/api/profile/${testUser.user_id}`);
+    const res = await request(app)
+      .delete(`/api/profile/${testUser.user_id}`)
+      .set('Authorization', `Bearer ${accessToken}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
