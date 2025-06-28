@@ -33,7 +33,7 @@ describe('Recurring Transaction Endpoints', () => {
 
     // Create a test account for the user
     testAccount = await accountService.createAccount({
-      user_id: testUser.user_id,
+      user_id: testUser.userId,
       account_name: 'Recurring Test Account',
       account_type: 'bank_account',
       initial_balance: 500,
@@ -42,16 +42,16 @@ describe('Recurring Transaction Endpoints', () => {
 
     // Create a test category for the user
     testCategory = await categoryService.createCategory({
-      user_id: testUser.user_id,
+      user_id: testUser.userId,
       category_name: 'Recurring Test Category',
       category_type: 'expense',
     });
 
     // Create a test recurring transaction
     testRecurringTransaction = await recurringTransactionService.createRecurringTransaction({
-      user_id: testUser.user_id,
-      account_id: testAccount.account_id,
-      category_id: testCategory.category_id,
+      user_id: testUser.userId,
+      account_id: testAccount.accountId,
+      category_id: testCategory.categoryId,
       amount: 25,
       transaction_type: 'expense',
       description: 'Recurring test transaction',
@@ -64,17 +64,17 @@ describe('Recurring Transaction Endpoints', () => {
 
   afterAll(async () => {
     // Clean up test data in reverse order of creation due to foreign key constraints
-    if (testRecurringTransaction && testRecurringTransaction.recurring_id) {
-      await recurringTransactionService.deleteRecurringTransaction(testRecurringTransaction.recurring_id);
+    if (testRecurringTransaction && testRecurringTransaction.recurringId) {
+      await recurringTransactionService.deleteRecurringTransaction(testRecurringTransaction.recurringId);
     }
-    if (testAccount && testAccount.account_id) {
-      await accountService.deleteAccount(testAccount.account_id);
+    if (testAccount && testAccount.accountId) {
+      await accountService.deleteAccount(testAccount.accountId);
     }
-    if (testCategory && testCategory.category_id) {
-      await categoryService.deleteCategory(testCategory.category_id);
+    if (testCategory && testCategory.categoryId) {
+      await categoryService.deleteCategory(testCategory.categoryId);
     }
-    if (testUser && testUser.user_id) {
-      await userService.deleteUser(testUser.user_id);
+    if (testUser && testUser.userId) {
+      await userService.deleteUser(testUser.userId);
     }
   });
 
@@ -90,26 +90,26 @@ describe('Recurring Transaction Endpoints', () => {
 
   it('should get a recurring transaction by ID', async () => {
     console.log(testRecurringTransaction);
-    if (!testRecurringTransaction || !testRecurringTransaction.recurring_id) {
+    if (!testRecurringTransaction || !testRecurringTransaction.recurringId) {
       throw new Error('Test recurring transaction not created for GET by ID test.');
     }
     console.log(testRecurringTransaction);
     const res = await request(app)
-      .get(`/api/recurring-transactions/${testRecurringTransaction.recurring_id}`)
+      .get(`/api/recurring-transactions/${testRecurringTransaction.recurringId}`)
       .set('Authorization', `Bearer ${accessToken}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('recurring_id', testRecurringTransaction.recurring_id);
-    expect(res.body.data.user_id).toEqual(testRecurringTransaction.user_id);
+    expect(res.body.data).toHaveProperty('recurringId', testRecurringTransaction.recurringId);
+    expect(res.body.data.userId).toEqual(testRecurringTransaction.userId);
     // Add more assertions to verify other properties match testRecurringTransaction
   });
 
   it('should create a new recurring transaction', async () => {
     const newRecurringTransactionData = {
-      user_id: testUser.user_id,
-      account_id: testAccount.account_id,
-      category_id: testCategory.category_id,
+      user_id: testUser.userId,
+      account_id: testAccount.accountId,
+      category_id: testCategory.categoryId,
       amount: 50,
       transaction_type: 'Income',
       description: 'New recurring income',
@@ -126,20 +126,20 @@ describe('Recurring Transaction Endpoints', () => {
 
     expect(res.statusCode).toEqual(201); // Assuming 201 Created
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('recurring_id');
-    expect(res.body.data.user_id).toEqual(newRecurringTransactionData.user_id);
+    expect(res.body.data).toHaveProperty('recurringId');
+    expect(res.body.data.userId).toEqual(newRecurringTransactionData.user_id);
     expect(parseFloat(res.body.data.amount)).toEqual(newRecurringTransactionData.amount);
     expect(res.body.data.frequency).toEqual(newRecurringTransactionData.frequency);
     // Add more assertions to verify other properties
 
     // Clean up the created recurring transaction
-    if (res.body.data && res.body.data.recurring_id) {
-      await recurringTransactionService.deleteRecurringTransaction(res.body.data.recurring_id);
+    if (res.body.data && res.body.data.recurringId) {
+      await recurringTransactionService.deleteRecurringTransaction(res.body.data.recurringId);
     }
   });
 
   it('should update a recurring transaction by ID', async () => {
-    if (!testRecurringTransaction || !testRecurringTransaction.recurring_id) {
+    if (!testRecurringTransaction || !testRecurringTransaction.recurringId) {
       throw new Error('Test recurring transaction not created for PUT by ID test.');
     }
 
@@ -148,9 +148,9 @@ describe('Recurring Transaction Endpoints', () => {
       description: 'Updated recurring transaction',
       frequency: 'quarterly',
       // these in futute will come from middleware
-      user_id: testUser.user_id,
-      account_id: testAccount.account_id,
-      category_id: testCategory.category_id,
+      user_id: testUser.userId,
+      account_id: testAccount.accountId,
+      category_id: testCategory.categoryId,
       transaction_type: 'expense',
       start_date: new Date().toISOString(),
       end_date: null,
@@ -158,13 +158,13 @@ describe('Recurring Transaction Endpoints', () => {
     };
 
     const res = await request(app)
-      .put(`/api/recurring-transactions/${testRecurringTransaction.recurring_id}`)
+      .put(`/api/recurring-transactions/${testRecurringTransaction.recurringId}`)
       .set('Authorization', `Bearer ${accessToken}`)
       .send(updatedRecurringTransactionData);
 
     expect(res.statusCode).toEqual(200); // Assuming 200 OK
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('recurring_id', testRecurringTransaction.recurring_id);
+    expect(res.body.data).toHaveProperty('recurringId', testRecurringTransaction.recurringId);
     expect(parseFloat(res.body.data.amount)).toEqual(updatedRecurringTransactionData.amount);
     expect(res.body.data.description).toEqual(updatedRecurringTransactionData.description);
     expect(res.body.data.frequency).toEqual(updatedRecurringTransactionData.frequency);
@@ -172,11 +172,11 @@ describe('Recurring Transaction Endpoints', () => {
   });
 
   it('should delete a recurring transaction by ID', async () => {
-    if (!testRecurringTransaction || !testRecurringTransaction.recurring_id) {
+    if (!testRecurringTransaction || !testRecurringTransaction.recurringId) {
       throw new Error('Test recurring transaction not created for DELETE by ID test.');
     }
 
-    const recurringTransactionIdToDelete = testRecurringTransaction.recurring_id;
+    const recurringTransactionIdToDelete = testRecurringTransaction.recurringId;
 
     const res = await request(app)
       .delete(`/api/recurring-transactions/${recurringTransactionIdToDelete}`)

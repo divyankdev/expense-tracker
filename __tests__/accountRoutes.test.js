@@ -29,7 +29,7 @@ describe('Account Endpoints', () => {
 
     // Create a test account for the user
     testAccount = await accountService.createAccount({
-      user_id: testUser.user_id,
+      user_id: testUser.userId,
       account_name: 'Test Account',
       account_type: 'bank_account',
       // initial_balance: 1000,
@@ -39,17 +39,17 @@ describe('Account Endpoints', () => {
 
   afterAll(async () => {
     // Clean up test data
-    if (testAccount && testAccount.account_id) {
-      await accountService.deleteAccount(testAccount.account_id);
+    if (testAccount && testAccount.accountId) {
+      await accountService.deleteAccount(testAccount.accountId);
     }
-    if (testUser && testUser.user_id) {
-      await userService.deleteUser(testUser.user_id);
+    if (testUser && testUser.userId) {
+      await userService.deleteUser(testUser.userId);
     }
   });
 
   it('should get all accounts for a user', async () => {
     const res = await request(app)
-      .get(`/api/accounts?user_id=${testUser.user_id}`)
+      .get(`/api/accounts?user_id=${testUser.userId}`)
       .set('Authorization', `Bearer ${accessToken}`);
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
@@ -57,22 +57,23 @@ describe('Account Endpoints', () => {
   });
 
   it('should get an account by ID', async () => {
-    if (!testAccount || !testAccount.account_id) {
+    console.log('testAccount:', testAccount);
+    if (!testAccount || !testAccount.accountId) {
       throw new Error('Test account not created for GET by ID test.');
     }
     const res = await request(app)
-      .get(`/api/accounts/${testAccount.account_id}`)
+      .get(`/api/accounts/${testAccount.accountId}`)
       .set('Authorization', `Bearer ${accessToken}`);
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('account_id', testAccount.account_id);
-    expect(res.body.data.user_id).toEqual(testUser.user_id);
-    expect(res.body.data.account_name).toEqual(testAccount.account_name);
+    expect(res.body.data).toHaveProperty('accountId', testAccount.accountId);
+    expect(res.body.data.userId).toEqual(testUser.userId);
+    expect(res.body.data.accountName).toEqual(testAccount.accountName);
   });
 
   it('should create a new account', async () => {
     const newAccountData = {
-      user_id: testUser.user_id,
+      user_id: testUser.userId,
       account_name: 'New Test Account',
       account_type: 'bank_account',
       // initial_balance: 500,
@@ -84,42 +85,42 @@ describe('Account Endpoints', () => {
       .send(newAccountData);
     expect(res.statusCode).toEqual(201);
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('account_id');
-    expect(res.body.data.user_id).toEqual(newAccountData.user_id);
-    expect(res.body.data.account_name).toEqual(newAccountData.account_name);
-    if (res.body.data && res.body.data.account_id) {
-      await accountService.deleteAccount(res.body.data.account_id);
+    expect(res.body.data).toHaveProperty('accountId');
+    expect(res.body.data.userId).toEqual(newAccountData.user_id);
+    expect(res.body.data.accountName).toEqual(newAccountData.account_name);
+    if (res.body.data && res.body.data.accountId) {
+      await accountService.deleteAccount(res.body.data.accountId);
     }
   });
 
   it('should update an account by ID', async () => {
-    if (!testAccount || !testAccount.account_id) {
+    if (!testAccount || !testAccount.accountId) {
       throw new Error('Test account not created for PUT by ID test.');
     }
     const updatedAccountData = {
-      user_id: testUser.user_id,
+      user_id: testUser.userId,
       account_name: 'Updated Test Account Name',
       account_type: 'bank_account',
       // initial_balance: 1000,
       current_balance: 1200,
     };
     const res = await request(app)
-      .put(`/api/accounts/${testAccount.account_id}`)
+      .put(`/api/accounts/${testAccount.accountId}`)
       .set('Authorization', `Bearer ${accessToken}`)
       .send(updatedAccountData);
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('account_id', testAccount.account_id);
-    expect(res.body.data.account_name).toEqual(updatedAccountData.account_name);
-    expect(parseFloat(res.body.data.current_balance)).toEqual(updatedAccountData.current_balance);
+    expect(res.body.data).toHaveProperty('accountId', testAccount.accountId);
+    expect(res.body.data.accountName).toEqual(updatedAccountData.account_name);
+    expect(parseFloat(res.body.data.currentBalance)).toEqual(updatedAccountData.current_balance);
   });
 
   it('should delete an account by ID', async () => {
-    if (!testAccount || !testAccount.account_id) {
+    if (!testAccount || !testAccount.accountId) {
       throw new Error('Test account not created for DELETE by ID test.');
     }
     const res = await request(app)
-      .delete(`/api/accounts/${testAccount.account_id}`)
+      .delete(`/api/accounts/${testAccount.accountId}`)
       .set('Authorization', `Bearer ${accessToken}`);
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');

@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const userTokenService = require('./userTokenService');
 const { query } = require('../utils/db'); // Assuming you have a db utility
+const { toCamelCase, toSnakeCase } = require('../utils/caseConverter');
 
 // Helper function to hash tokens (SHA256)
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
@@ -27,26 +28,26 @@ const parseTokenExpiry = (expiryString) => {
 // Register a new user
 const registerUser = async (userData) => {
   try {
-    // Input validation
     if (!userData.email || !userData.password) throw new Error('Email and password are required');
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+    const snakeData = toSnakeCase(userData);
     const sql = 'INSERT INTO users (email, password_hash, first_name, last_name, phone_number, date_of_birth, profile_picture_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING user_id, email, first_name, last_name, phone_number, date_of_birth, profile_picture_url, created_at, updated_at, last_login, is_active';
-    const values = [userData.email, hashedPassword, userData.first_name, userData.last_name, userData.phone_number, userData.date_of_birth, userData.profile_picture_url];
+    const values = [snakeData.email, hashedPassword, snakeData.first_name, snakeData.last_name, snakeData.phone_number, snakeData.date_of_birth, snakeData.profile_picture_url];
     const { rows } = await query(sql, values);
-    const newUser = rows[0];
+    const newUser = toCamelCase(rows[0]);
     // Generate tokens
-    const tokens = generateTokens(newUser.user_id, newUser.email);
-    await userTokenService.createUserToken({
-      user_id: newUser.user_id,
-      refresh_token: tokens.refreshToken,
-      token_type: 'refresh',
-      expires_at: new Date(Date.now() + parseTokenExpiry(process.env.REFRESH_TOKEN_EXPIRY || '7d')),
-      device_info: userData.device_info || null,
-      ip_address: userData.ip_address || null,
-      last_used_at: new Date(),
-      is_active: true
-    });
+    const tokens = generateTokens(newUser.userId, newUser.email);
+    await userTokenService.createUserToken(toSnakeCase({
+      userId: newUser.userId,
+      refreshToken: tokens.refreshToken,
+      tokenType: 'refresh',
+      expiresAt: new Date(Date.now() + parseTokenExpiry(process.env.REFRESH_TOKEN_EXPIRY || '7d')),
+      deviceInfo: userData.device_info || null,
+      ipAddress: userData.ip_address || null,
+      lastUsedAt: new Date(),
+      isActive: true
+    }));
     return { user: newUser, ...tokens };
   } catch (error) {
     throw new Error('Registration failed');
@@ -69,18 +70,19 @@ const loginUser = async (email, password, device_info, ip_address) => {
     // Update last_login
     await query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = $1', [user.user_id]);
     delete user.password_hash;
-    const tokens = generateTokens(user.user_id, user.email);
-    await userTokenService.createUserToken({
-      user_id: user.user_id,
-      refresh_token: tokens.refreshToken,
-      token_type: 'refresh',
-      expires_at: new Date(Date.now() + parseTokenExpiry(process.env.REFRESH_TOKEN_EXPIRY || '7d')),
-      device_info: device_info || null,
-      ip_address: ip_address || null,
-      last_used_at: new Date(),
-      is_active: true
-    });
-    return { user, ...tokens };
+    const camelUser = toCamelCase(user);
+    const tokens = generateTokens(camelUser.userId, camelUser.email);
+    await userTokenService.createUserToken(toSnakeCase({
+      userId: camelUser.userId,
+      refreshToken: tokens.refreshToken,
+      tokenType: 'refresh',
+      expiresAt: new Date(Date.now() + parseTokenExpiry(process.env.REFRESH_TOKEN_EXPIRY || '7d')),
+      deviceInfo: device_info || null,
+      ipAddress: ip_address || null,
+      lastUsedAt: new Date(),
+      isActive: true
+    }));
+    return { user: camelUser, ...tokens };
   } catch (error) {
     throw new Error('Login failed');
   }
@@ -251,4 +253,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   cleanupExpiredTokens,
+  parseTokenExpiry
 };

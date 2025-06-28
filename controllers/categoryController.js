@@ -20,6 +20,8 @@ const categoryController = {
   }),
 
   createCategory: asyncHandler(async (req, res, next) => {
+    req.body.user_id = req.user.userId;
+    req.body.color = '#000000';
     const newCategory = await categoryService.createCategory(req.body);
     responseHandler.sendSuccess(res, HTTP_STATUS_CODES.CREATED, RESPONSE_MESSAGES.SUCCESS, newCategory);
   }),

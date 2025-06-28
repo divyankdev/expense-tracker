@@ -2,6 +2,7 @@
 
 const { query } = require('../utils/db');
 const crypto = require('crypto');
+const { toCamelCase, toSnakeCase } = require('../utils/caseConverter');
 
 // Helper: SHA256 hash for tokens
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
@@ -28,7 +29,7 @@ const userTokenService = {
       params.push(tokenType);
     }
     const { rows } = await query(sql, params);
-    return rows;
+    return toCamelCase(rows);
   },
 
   /**
@@ -38,7 +39,7 @@ const userTokenService = {
    */
   getUserTokenById: async (tokenId) => {
     const { rows } = await query('SELECT * FROM user_tokens WHERE token_id = $1', [tokenId]);
-    return rows[0];
+    return toCamelCase(rows[0]);
   },
 
   /**
@@ -47,9 +48,9 @@ const userTokenService = {
    * @returns {Promise<object>} A promise that resolves with the created user token object.
    */
   createUserToken: async (userTokenData) => {
-    // Required fields
+    const snakeData = toSnakeCase(userTokenData);
     const required = ['user_id', 'refresh_token', 'token_type', 'expires_at'];
-    validateTokenData(userTokenData, required);
+    validateTokenData(snakeData, required);
     const {
       user_id,
       refresh_token,
@@ -59,13 +60,13 @@ const userTokenService = {
       expires_at,
       last_used_at = null,
       is_active = true
-    } = userTokenData;
+    } = snakeData;
     const refresh_token_hash = hashToken(refresh_token);
     const { rows } = await query(
       'INSERT INTO user_tokens (user_id, refresh_token_hash, token_type, device_info, ip_address, expires_at, last_used_at, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
       [user_id, refresh_token_hash, token_type, device_info, ip_address, expires_at, last_used_at, is_active]
     );
-    return rows[0];
+    return toCamelCase(rows[0]);
   },
 
   /**
@@ -75,6 +76,7 @@ const userTokenService = {
    * @returns {Promise<object|null>} A promise that resolves with the updated user token object or null if not found.
    */
   updateUserToken: async (tokenId, userTokenData) => {
+    const snakeData = toSnakeCase(userTokenData);
     const {
       user_id,
       refresh_token, // plain token, will be hashed
@@ -84,13 +86,13 @@ const userTokenService = {
       expires_at,
       last_used_at,
       is_active
-    } = userTokenData;
+    } = snakeData;
     const refresh_token_hash = refresh_token ? hashToken(refresh_token) : undefined;
     const { rows } = await query(
       'UPDATE user_tokens SET user_id = $1, refresh_token_hash = COALESCE($2, refresh_token_hash), token_type = $3, device_info = $4, ip_address = $5, expires_at = $6, last_used_at = $7, is_active = $8, updated_at = CURRENT_TIMESTAMP WHERE token_id = $9 RETURNING *',
       [user_id, refresh_token_hash, token_type, device_info, ip_address, expires_at, last_used_at, is_active, tokenId]
     );
-    return rows[0];
+    return toCamelCase(rows[0]);
   },
 
   /**
@@ -100,7 +102,7 @@ const userTokenService = {
    */
   deleteUserToken: async (tokenId) => {
     const { rows } = await query('DELETE FROM user_tokens WHERE token_id = $1 RETURNING *', [tokenId]);
-    return rows[0];
+    return toCamelCase(rows[0]);
   },
 
   // Find token by hash and type (for refresh or password reset)
@@ -110,7 +112,7 @@ const userTokenService = {
       'SELECT * FROM user_tokens WHERE refresh_token_hash = $1 AND token_type = $2 AND user_id = $3 AND is_active = true AND expires_at > NOW()',
       [token_hash, token_type, user_id]
     );
-    return rows[0];
+    return toCamelCase(rows[0]);
   },
 
   // Find password reset token by hash and type only (no user_id required)
@@ -120,7 +122,7 @@ const userTokenService = {
       'SELECT * FROM user_tokens WHERE refresh_token_hash = $1 AND token_type = $2 AND is_active = true AND expires_at > NOW()',
       [token_hash, 'password_reset']
     );
-    return rows[0];
+    return toCamelCase(rows[0]);
   },
 
   // Invalidate token by hash and type
@@ -130,7 +132,7 @@ const userTokenService = {
       'UPDATE user_tokens SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE refresh_token_hash = $1 AND token_type = $2 AND user_id = $3 RETURNING *',
       [token_hash, token_type, user_id]
     );
-    return rows[0];
+    return toCamelCase(rows[0]);
   },
 
   // Cleanup expired or inactive tokens

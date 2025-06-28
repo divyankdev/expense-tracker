@@ -32,22 +32,22 @@ describe('User Endpoints', () => {
 
   afterAll(async () => {
     // Delete the test user after all tests are done
-    if (testUser && testUser.user_id) {
-      await userService.deleteUser(testUser.user_id);
+    if (testUser && testUser.userId) {
+      await userService.deleteUser(testUser.userId);
     }
   });
 
   it('should get a user by ID', async () => {
     // Ensure the testUser was created successfully in beforeAll
-    if (!testUser || !testUser.user_id) {
+    if (!testUser || !testUser.userId) {
       throw new Error('Test user not created for GET by ID test.');
     }
 
-    const res = await request(app).get(`/api/profile/${testUser.user_id}`); // Assuming user routes are under /api/profile/:id
+    const res = await request(app).get(`/api/profile/${testUser.userId}`); // Assuming user routes are under /api/profile/:id
 
     expect(res.statusCode).toEqual(200); // Or whatever status code your getUserById endpoint returns on success
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('user_id', testUser.user_id);
+    expect(res.body.data).toHaveProperty('userId', testUser.userId);
     // Add more assertions based on the expected response body
   });
 
@@ -77,19 +77,19 @@ describe('User Endpoints', () => {
 
     expect(res.statusCode).toEqual(201);
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('user_id');
+    expect(res.body.data).toHaveProperty('userId');
     expect(res.body.data.email).toEqual(newUserData.email);
-    expect(res.body.data.first_name).toEqual(newUserData.first_name);
-    expect(res.body.data.last_name).toEqual(newUserData.last_name);
+    expect(res.body.data.firstName).toEqual(newUserData.first_name);
+    expect(res.body.data.lastName).toEqual(newUserData.last_name);
 
     // Clean up the created user
-    if (res.body.data && res.body.data.user_id) {
-      await userService.deleteUser(res.body.data.user_id);
+    if (res.body.data && res.body.data.userId) {
+      await userService.deleteUser(res.body.data.userId);
     }
   });
 
   it('should update a user by ID', async () => {
-    if (!testUser || !testUser.user_id) {
+    if (!testUser || !testUser.userId) {
       throw new Error('Test user not created for PUT by ID test.');
     }
 
@@ -103,21 +103,21 @@ describe('User Endpoints', () => {
     };
 
     const res = await request(app)
-      .put(`/api/profile/${testUser.user_id}`)
+      .put(`/api/profile/${testUser.userId}`)
       .set('Authorization', `Bearer ${accessToken}`)
       .send(updatedUserData);
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('user_id', testUser.user_id);
-    expect(res.body.data.first_name).toEqual(updatedUserData.first_name);
-    expect(res.body.data.last_name).toEqual(updatedUserData.last_name);
-    expect(res.body.data.phone_number).toEqual(updatedUserData.phone_number);
+    expect(res.body.data).toHaveProperty('userId', testUser.userId);
+    expect(res.body.data.firstName).toEqual(updatedUserData.first_name);
+    expect(res.body.data.lastName).toEqual(updatedUserData.last_name);
+    expect(res.body.data.phoneNumber).toEqual(updatedUserData.phone_number);
   });
 
   it('should upload a user avatar', async () => {
     // Ensure the testUser was created successfully in beforeAll
-    if (!testUser || !testUser.user_id) {
+    if (!testUser || !testUser.userId) {
       throw new Error('Test user not created for avatar upload test.');
     }
 
@@ -126,23 +126,23 @@ describe('User Endpoints', () => {
     // to a small test image file and 'avatar' with the field name expected by your upload middleware.
     const imagePath = path.resolve(__dirname, '../public/profile.png');
     const res = await request(app)
-      .post(`/api/profile/${testUser.user_id}/avatar`)
+      .post(`/api/profile/${testUser.userId}/avatar`)
       .set('Authorization', `Bearer ${accessToken}`)
       .attach('avatar', imagePath); // Uncomment and configure for file upload
       // .send({}); // Remove this .send({}) when using .attach()
 
     expect(res.statusCode).toEqual(200); // Or whatever status code your uploadAvatar endpoint returns on success
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('profile_picture_url'); // Assert that the response includes the new avatar URL
+    expect(res.body.data).toHaveProperty('profilePictureUrl'); // Assert that the response includes the new avatar URL
   });
   
   it('should delete a user by ID', async () => {
-    if (!testUser || !testUser.user_id) {
+    if (!testUser || !testUser.userId) {
       throw new Error('Test user not created for DELETE by ID test.');
     }
 
     const res = await request(app)
-      .delete(`/api/profile/${testUser.user_id}`)
+      .delete(`/api/profile/${testUser.userId}`)
       .set('Authorization', `Bearer ${accessToken}`);
 
     expect(res.statusCode).toEqual(200);

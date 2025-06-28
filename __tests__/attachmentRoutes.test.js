@@ -38,7 +38,7 @@ describe('Attachment Endpoints', () => {
     // Create a test transaction for the user (attachments are linked to transactions)
     // This requires account and category
     testAccount = await accountService.createAccount({
-         user_id: testUser.user_id,
+         userId: testUser.userId,
  // Add other necessary account fields with dummy data
          account_name: 'Test Account',
          account_type: 'bank_account',
@@ -48,15 +48,15 @@ describe('Attachment Endpoints', () => {
 
      testCategory = await categoryService.createCategory({
  // Add other necessary category fields with dummy data
-         user_id: testUser.user_id,
+         userId: testUser.userId,
          category_name: 'Test Category',
          category_type: 'expense',
      });
 
     testTransaction = await transactionService.createTransaction({
-      user_id: testUser.user_id,
-      account_id: testAccount.account_id, // Link to test account
-      category_id: testCategory.category_id, // Link to test category
+      userId: testUser.userId,
+      account_id: testAccount.accountId, // Link to test account
+      category_id: testCategory.categoryId, // Link to test category
       amount: 50,
       transaction_type: 'expense',
       description: 'Transaction with attachment',
@@ -66,7 +66,7 @@ describe('Attachment Endpoints', () => {
     // Optionally create a test attachment if needed for GET by ID, PUT, DELETE tests later
     // testAttachment = await attachmentService.createAttachment({
     //   transaction_id: testTransaction.transaction_id,
-    //   user_id: testUser.user_id, // Assuming attachments are also linked to a user
+    //   userId: testUser.userId, // Assuming attachments are also linked to a user
     //   file_name: 'test_attachment.txt',
     //   file_path: '/path/to/test_attachment.txt', // Replace with a path to a dummy test file
     //   file_type: 'text/plain',
@@ -78,20 +78,20 @@ describe('Attachment Endpoints', () => {
 
   afterAll(async () => {
     // Clean up test data in reverse order
-    if (testAttachment && testAttachment.attachment_id) {
-        await attachmentService.deleteAttachment(testAttachment.attachment_id);
+    // if (testAttachment && testAttachment.attachment_id) {
+    //     await attachmentService.deleteAttachment(testAttachment.attachment_id);
+    // }
+    if (testTransaction && testTransaction.transactionId) {
+      await transactionService.deleteTransaction(testTransaction.transactionId);
     }
-    if (testTransaction && testTransaction.transaction_id) {
-      await transactionService.deleteTransaction(testTransaction.transaction_id);
+    if (testAccount && testAccount.accountId) {
+      await accountService.deleteAccount(testAccount.accountId);
     }
-    if (testAccount && testAccount.account_id) {
-      await accountService.deleteAccount(testAccount.account_id);
+    if (testCategory && testCategory.categoryId) {
+      await categoryService.deleteCategory(testCategory.categoryId);
     }
-    if (testCategory && testCategory.category_id) {
-      await categoryService.deleteCategory(testCategory.category_id);
-    }
-    if (testUser && testUser.user_id) {
-      await userService.deleteUser(testUser.user_id);
+    if (testUser && testUser.userId) {
+      await userService.deleteUser(testUser.userId);
     }
   });
 
@@ -114,16 +114,16 @@ describe('Attachment Endpoints', () => {
     fs.writeFileSync(dummyFilePath, dummyFileContent);
 
     const res = await request(app)
-      .post(`/api/attachments/${testTransaction.transaction_id}`)
+      .post(`/api/attachments/${testTransaction.transactionId}`)
       .set('Authorization', `Bearer ${accessToken}`)
       .attach('attachment', dummyFilePath); // 'attachment' should match the field name in your multer setup
       
 
     expect(res.statusCode).toEqual(201); // Assuming 201 Created on success
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('attachment_id');
-    expect(res.body.data.transaction_id).toEqual(testTransaction.transaction_id);
-    expect(res.body.data).toHaveProperty('file_name', 'dummy_upload.txt'); // Check the file name
+    expect(res.body.data).toHaveProperty('attachmentId');
+    expect(res.body.data.transactionId).toEqual(testTransaction.transactionId);
+    expect(res.body.data).toHaveProperty('fileName', 'dummy_upload.txt'); // Check the file name
     // Add more assertions for other properties like file_path, file_type, upload_date
 
     // Store the created attachment ID for subsequent tests if needed
@@ -135,26 +135,27 @@ describe('Attachment Endpoints', () => {
 
   it('should get an attachment by ID', async () => {
     // Ensure a test attachment exists (created in beforeAll or the create test)
-    if (!testAttachment || !testAttachment.attachment_id) {
+    if (!testAttachment || !testAttachment.attachmentId) {
       // Create a temporary attachment if one doesn't exist
       const tempAttachment = await attachmentService.createAttachment({
-        transaction_id: testTransaction.transaction_id,
-        user_id: testUser.user_id,
+        transaction_id: testTransaction.transactionId,
+        userId: testUser.userId,
         file_name: 'temp_get_attachment.txt',
         file_path: '/temp/path/temp_get_attachment.txt',
         file_type: 'text/plain',
+        file_size: 100,
         upload_date: new Date().toISOString(),
       });
       testAttachment = tempAttachment;
     }
 
     const res = await request(app)
-      .get(`/api/attachments/${testAttachment.attachment_id}`)
+      .get(`/api/attachments/${testAttachment.attachmentId}`)
       .set('Authorization', `Bearer ${accessToken}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('attachment_id', testAttachment.attachment_id);
+    expect(res.body.data).toHaveProperty('attachmentId', testAttachment.attachmentId);
     // Add more assertions to verify other properties match testAttachment
   });
 

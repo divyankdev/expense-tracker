@@ -149,13 +149,13 @@ describe('Auth Endpoints', () => {
 
   afterAll(async () => {
     // Delete the user created manually
-    await userService.deleteUser(testUser.user_id);
+    await userService.deleteUser(testUser.userId);
   
     // Delete the user created through registration test
     // if (registeredUserEmail) {
     //   const user = await userService.getUserByEmail(registeredUserEmail);
     //   if (user) {
-    //     await userService.deleteUser(user.user_id);
+    //     await userService.deleteUser(user.userId);
     //   }
     // }
   });  

@@ -6,6 +6,7 @@ const { HTTP_STATUS_CODES, RESPONSE_MESSAGES } = require('../utils/constants');
 const accountController = {
   getAllAccounts: asyncHandler(async (req, res) => {
     const accounts = await accountService.getAllAccounts();
+    // console.log('Accounts:', accounts); 
     responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.SUCCESS, accounts);
   }),
 
@@ -22,6 +23,7 @@ const accountController = {
   createAccount: asyncHandler(async (req, res) => {
     const accountData = req.body; // Assuming account data is in the request body
     // TODO: Add input validation for accountData
+    req.body.user_id = req.user.userId;
     const newAccount = await accountService.createAccount(accountData);
     responseHandler.sendSuccess(res, HTTP_STATUS_CODES.CREATED, RESPONSE_MESSAGES.ACCOUNT_CREATED_SUCCESS, newAccount);
   }),

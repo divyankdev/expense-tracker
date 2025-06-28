@@ -33,7 +33,7 @@ describe('Budget Endpoints', () => {
 
     // Create a test category for the user
     testCategory = await categoryService.createCategory({
-      user_id: testUser.user_id,
+      user_id: testUser.userId,
       category_name: 'Test Budget Category',
       category_type: 'expense', // or 'income' as appropriate
     });
@@ -43,8 +43,8 @@ describe('Budget Endpoints', () => {
 
     // Create a test budget for the user
     testBudget = await budgetService.createBudget({
-      user_id: testUser.user_id,
-      category_id: testCategory.category_id, // Assuming category_id can be null or create a test category
+      user_id: testUser.userId,
+      category_id: testCategory.categoryId, // Assuming category_id can be null or create a test category
       start_date: new Date().toISOString(),
       end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
       amount: 500,
@@ -56,17 +56,17 @@ describe('Budget Endpoints', () => {
 
   afterAll(async () => {
     // Clean up test data
-    if (testBudget && testBudget.budget_id) {
-      await budgetService.deleteBudget(testBudget.budget_id);
+    if (testBudget && testBudget.budgetId) {
+      await budgetService.deleteBudget(testBudget.budgetId);
     }
-    if (testUser && testUser.user_id) {
-      await userService.deleteUser(testUser.user_id);
+    if (testUser && testUser.userId) {
+      await userService.deleteUser(testUser.userId);
     }
   });
 
   it('should get all budgets for the test user', async () => {
     const res = await request(app)
-      .get(`/api/budgets?user_id=${testUser.user_id}`)
+      .get(`/api/budgets?user_id=${testUser.userId}`)
       .set('Authorization', `Bearer ${accessToken}`);
     expect(res.statusCode).toEqual(HTTP_STATUS_CODES.OK);
     expect(res.body).toHaveProperty('status', 'success');
@@ -75,24 +75,25 @@ describe('Budget Endpoints', () => {
   });
 
   it('should get a budget by ID', async () => {
-    if (!testBudget || !testBudget.budget_id) {
+    // console.log('testBudget:', testBudget);
+    if (!testBudget || !testBudget.budgetId) {
       throw new Error('Test budget not created for GET by ID test.');
     }
     const res = await request(app)
-      .get(`/api/budgets/${testBudget.budget_id}`)
+      .get(`/api/budgets/${testBudget.budgetId}`)
       .set('Authorization', `Bearer ${accessToken}`);
     expect(res.statusCode).toEqual(HTTP_STATUS_CODES.OK);
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('budget_id', testBudget.budget_id);
-    expect(res.body.data.user_id).toEqual(testUser.user_id);
+    expect(res.body.data).toHaveProperty('budgetId', testBudget.budgetId);
+    expect(res.body.data.userId).toEqual(testUser.userId);
     expect(parseFloat(res.body.data.amount)).toEqual(parseFloat(testBudget.amount));
     // Add more assertions to verify other properties match testBudget
   });
 
   it('should create a new budget', async () => {
     const newBudgetData = {
-      user_id: testUser.user_id,
-      category_id: testCategory.category_id, // Assuming category_id can be null or create another test category
+      user_id: testUser.userId,
+      category_id: testCategory.categoryId, // Assuming category_id can be null or create another test category
       start_date: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days from now
       end_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(), // 90 days from now
       amount: 750,
@@ -107,25 +108,25 @@ describe('Budget Endpoints', () => {
       .send(newBudgetData);
     expect(res.statusCode).toEqual(HTTP_STATUS_CODES.CREATED);
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('budget_id');
-    expect(res.body.data.user_id).toEqual(newBudgetData.user_id);
+    expect(res.body.data).toHaveProperty('budgetId');
+    expect(res.body.data.userId).toEqual(newBudgetData.user_id);
     expect(parseFloat(res.body.data.amount)).toEqual(newBudgetData.amount);
     // Add more assertions to verify other properties match newBudgetData
 
     // Clean up the created budget in this test
-    if (res.body.data && res.body.data.budget_id) {
-      await budgetService.deleteBudget(res.body.data.budget_id);
+    if (res.body.data && res.body.data.budgetId) {
+      await budgetService.deleteBudget(res.body.data.budgetId);
     }
   });
 
   it('should update a budget by ID', async () => {
-    if (!testBudget || !testBudget.budget_id) {
+    if (!testBudget || !testBudget.budgetId) {
       throw new Error('Test budget not created for PUT by ID test.');
     }
     const updatedBudgetData = {
       amount: 600, // Update the budget amount
       // spent_amount: 50, // Update spent amount
-      category_id: testCategory.category_id,
+      category_id: testCategory.categoryId,
       is_active: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -133,29 +134,29 @@ describe('Budget Endpoints', () => {
       end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
     };
     const res = await request(app)
-      .put(`/api/budgets/${testBudget.budget_id}`)
+      .put(`/api/budgets/${testBudget.budgetId}`)
       .set('Authorization', `Bearer ${accessToken}`)
       .send(updatedBudgetData);
     expect(res.statusCode).toEqual(HTTP_STATUS_CODES.OK);
     expect(res.body).toHaveProperty('status', 'success');
-    expect(res.body.data).toHaveProperty('budget_id', testBudget.budget_id);
+    expect(res.body.data).toHaveProperty('budgetId', testBudget.budgetId);
     expect(parseFloat(res.body.data.amount)).toEqual(updatedBudgetData.amount);
     // expect(parseFloat(res.body.data.spent_amount)).toEqual(updatedBudgetData.spent_amount);
     // Add more assertions to verify other updated properties
   });
 
   it('should delete a budget by ID', async () => {
-    if (!testBudget || !testBudget.budget_id) {
+    if (!testBudget || !testBudget.budgetId) {
       throw new Error('Test budget not created for DELETE by ID test.');
     }
-    const budgetIdToDelete = testBudget.budget_id;
+    const budgetIdToDelete = testBudget.budgetId;
     const res = await request(app)
       .delete(`/api/budgets/${budgetIdToDelete}`)
       .set('Authorization', `Bearer ${accessToken}`);
     expect(res.statusCode).toEqual(HTTP_STATUS_CODES.OK); // Or 204 No Content depending on your controller
     expect(res.body).toHaveProperty('status', 'success');
     // If your delete response includes the deleted item's ID, you can assert it:
-    // expect(res.body.data).toHaveProperty('budget_id', budgetIdToDelete);
+    // expect(res.body.data).toHaveProperty('budgetId', budgetIdToDelete);
     expect(res.body).toHaveProperty('message'); // Check for a success message
   });
 });

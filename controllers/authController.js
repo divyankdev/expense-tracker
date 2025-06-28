@@ -154,6 +154,24 @@ const googleAuthCallback = asyncHandler(async (req, res) => {
   res.redirect(`YOUR_FRONTEND_REDIRECT_URL?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`);
 });
 
+// // REFINED: Google authentication callback
+// const googleAuthCallback = asyncHandler(async (req, res) => {
+//   // Passport has already authenticated the user and attached it to req.user.
+//   // This user object is the complete user record from your database.
+//   const user = req.user;
+
+//   // We just need to generate tokens for this user.
+//   const device_info = getDeviceInfo(req);
+//   const ip_address = getIpAddress(req);
+  
+//   const tokens = await authService.generateAuthTokens(user, device_info, ip_address);
+
+//   // Redirect the user to your frontend, passing the tokens as query parameters.
+//   // The frontend will then need to read these tokens from the URL and save them.
+//   const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`;
+  
+//   res.redirect(redirectUrl);
+// });
 module.exports = {
   register,
   login,

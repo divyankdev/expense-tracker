@@ -21,6 +21,7 @@ const budgetController = {
   }),
 
   createBudget: asyncHandler(async (req, res) => {
+    req.body.user_id = req.user.userId;
     const newBudget = await budgetService.createBudget(req.body);
     responseHandler.sendSuccess(res, HTTP_STATUS_CODES.CREATED, RESPONSE_MESSAGES.SUCCESS, newBudget);
   }),

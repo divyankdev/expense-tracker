@@ -35,7 +35,7 @@ describe('User Token Endpoints', () => {
     // during login/auth flow, not create them directly like this for tests.
     // This is simplified for test data setup.
     testUserToken = await userTokenService.createUserToken({
-      user_id: testUser.user_id,
+      user_id: testUser.userId,
       refresh_token: TEST_REFRESH_TOKEN,
       token_type: 'refresh',
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
@@ -50,8 +50,8 @@ describe('User Token Endpoints', () => {
     if (testUserToken && testUserToken.token_id) {
       await userTokenService.deleteUserToken(testUserToken.token_id);
     }
-    if (testUser && testUser.user_id) {
-      await userService.deleteUser(testUser.user_id);
+    if (testUser && testUser.userId) {
+      await userService.deleteUser(testUser.userId);
     }
   });
 
@@ -77,13 +77,13 @@ describe('User Token Endpoints', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('status', 'success');
     expect(res.body.data).toHaveProperty('token_id', testUserToken.token_id);
-    expect(res.body.data.user_id).toEqual(testUser.user_id);
+    expect(res.body.data.userId).toEqual(testUser.userId);
     // Add more assertions to verify other properties match testUserToken
   });
 
   it('should create a new user token', async () => {
     const newTokenData = {
-      user_id: testUser.user_id,
+      user_id: testUser.userId,
       refresh_token: 'newrefreshtoken',
       token_type: 'refresh',
       expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
@@ -100,7 +100,7 @@ describe('User Token Endpoints', () => {
     expect(res.statusCode).toEqual(201);
     expect(res.body).toHaveProperty('status', 'success');
     expect(res.body.data).toHaveProperty('token_id');
-    expect(res.body.data.user_id).toEqual(newTokenData.user_id);
+    expect(res.body.data.userId).toEqual(newTokenData.userId);
     expect(res.body.data.token_type).toEqual(newTokenData.token_type);
     expect(res.body.data.is_active).toEqual(newTokenData.is_active);
 

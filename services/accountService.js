@@ -1,6 +1,7 @@
 // services/accountService.js
 
 const { query } = require('../utils/db'); // Import the query function from db.js
+const { toCamelCase, toSnakeCase } = require('../utils/caseConverter');
 
 const accountService = {
   /**
@@ -12,7 +13,7 @@ const accountService = {
       console.log('Fetching all accounts...');
       const sql = 'SELECT * FROM accounts';
       const { rows } = await query(sql);
- return rows;
+      return toCamelCase(rows);
     } catch (error) {
       console.error('Error fetching all accounts:', error);
       throw error;
@@ -26,11 +27,11 @@ const accountService = {
    */
   async getAccountById(accountId) {
     try {
-      console.log(`Fetching account with ID: ${accountId}`);
+      // console.log(`Fetching account with ID: ${accountId}`);
       const sql = 'SELECT * FROM accounts WHERE account_id = $1';
       const values = [accountId];
       const { rows } = await query(sql, values);
- return rows[0] || null; // Return the first row or null if not found
+      return toCamelCase(rows[0]) || null; // Return the first row or null if not found
     } catch (error) {
       console.error(`Error fetching account with ID ${accountId}:`, error);
       throw error;
@@ -44,18 +45,17 @@ const accountService = {
    */
   async createAccount(accountData) {
     try {
-      // console.log('Creating new account:', accountData);
+      const snakeData = toSnakeCase(accountData);
+      console.log('snakeData:', snakeData);
       const sql = 'INSERT INTO accounts (account_name, account_type, current_balance, user_id) VALUES ($1, $2, $3, $4) RETURNING *';
       const values = [
-        accountData.account_name,
-        accountData.account_type,
-        //  accountData.initial_balance,
-        accountData.current_balance, // Assuming current_balance is provided or calculated
-        //  accountData.currency,
-        accountData.user_id, // Assuming user_id is in accountData
+        snakeData.account_name,
+        snakeData.account_type,
+        snakeData.current_balance,
+        snakeData.user_id,
       ];
       const { rows } = await query(sql, values);
- return rows[0]; // Return the newly created account
+      return toCamelCase(rows[0]); // Return the newly created account
     } catch (error) {
       console.error('Error creating account:', error);
       throw error;
@@ -71,9 +71,9 @@ const accountService = {
   async updateAccount(accountId, accountData) {
     try {
       console.log(`Updating account with ID ${accountId}:`, accountData);
-      // Construct the UPDATE query dynamically based on provided fields
-      const fields = Object.keys(accountData).map((key, index) => `${key} = $${index + 1}`).join(', ');
-      const values = Object.values(accountData);
+      const snakeData = toSnakeCase(accountData);
+      const fields = Object.keys(snakeData).map((key, index) => `${key} = $${index + 1}`).join(', ');
+      const values = Object.values(snakeData);
       values.push(accountId); // Add accountId for the WHERE clause
 
       if (fields.length === 0) {
@@ -81,7 +81,7 @@ const accountService = {
       }
       const sql = `UPDATE accounts SET ${fields} WHERE account_id = $${values.length} RETURNING *`;
       const { rows } = await query(sql, values);
- return rows[0] || null; // Return the updated account or null if not found
+      return toCamelCase(rows[0]) || null; // Return the updated account or null if not found
     } catch (error) {
       console.error(`Error updating account with ID ${accountId}:`, error);
       throw error;
@@ -99,7 +99,7 @@ const accountService = {
       const sql = 'DELETE FROM accounts WHERE account_id = $1 RETURNING *';
       const values = [accountId];
       const { rows } = await query(sql, values);
- return rows.length > 0; // Return true if a row was deleted, false otherwise
+      return rows.length > 0; // Boolean, no need to convert
     } catch (error) {
       console.error(`Error deleting account with ID ${accountId}:`, error);
       throw error;

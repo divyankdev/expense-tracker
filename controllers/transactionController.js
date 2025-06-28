@@ -26,6 +26,7 @@ const transactionController = {
 
   createTransaction: asyncHandler(async (req, res) => {
     const transactionData = req.body;
+    req.body.user_id = req.user.userId;
     const newTransaction = await transactionService.createTransaction(transactionData);
     console.log('New Transaction:', newTransaction);
     responseHandler.sendSuccess(res, HTTP_STATUS_CODES.CREATED, RESPONSE_MESSAGES.TRANSACTION_CREATED_SUCCESS, newTransaction);
@@ -34,6 +35,7 @@ const transactionController = {
   updateTransaction: asyncHandler(async (req, res) => {
     const transactionId = req.params.id;
     const transactionData = req.body;
+    req.body.user_id = req.user.userId;
     const updatedTransaction = await transactionService.updateTransaction(transactionId, transactionData);
     if (updatedTransaction) {
       responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, RESPONSE_MESSAGES.TRANSACTION_UPDATED_SUCCESS, updatedTransaction);
