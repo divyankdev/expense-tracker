@@ -5,9 +5,13 @@ const transactionService = require('../services/transactionService');
 const accountService = require('../services/accountService');
 const categoryService = require('../services/categoryService');
 const attachmentService = require('../services/attachmentService');
+const { processReceiptWithAzure } = require('../services/azureReceiptProcessor');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 const path = require('path');
+
+jest.mock('../services/attachmentService');
+jest.mock('../services/azureReceiptProcessor');
 
 let testUser;
 let testTransaction;
@@ -38,20 +42,20 @@ describe('Attachment Endpoints', () => {
     // Create a test transaction for the user (attachments are linked to transactions)
     // This requires account and category
     testAccount = await accountService.createAccount({
-         userId: testUser.userId,
- // Add other necessary account fields with dummy data
-         account_name: 'Test Account',
-         account_type: 'bank_account',
-         initial_balance: 1000,
-         current_balance: 1000,
-     });
+      userId: testUser.userId,
+      // Add other necessary account fields with dummy data
+      account_name: 'Test Account',
+      account_type: 'bank_account',
+      initial_balance: 1000,
+      current_balance: 1000,
+    });
 
-     testCategory = await categoryService.createCategory({
- // Add other necessary category fields with dummy data
-         userId: testUser.userId,
-         category_name: 'Test Category',
-         category_type: 'expense',
-     });
+    testCategory = await categoryService.createCategory({
+      // Add other necessary category fields with dummy data
+      userId: testUser.userId,
+      category_name: 'Test Category',
+      category_type: 'expense',
+    });
 
     testTransaction = await transactionService.createTransaction({
       userId: testUser.userId,
@@ -117,7 +121,7 @@ describe('Attachment Endpoints', () => {
       .post(`/api/attachments/${testTransaction.transactionId}`)
       .set('Authorization', `Bearer ${accessToken}`)
       .attach('attachment', dummyFilePath); // 'attachment' should match the field name in your multer setup
-      
+
 
     expect(res.statusCode).toEqual(201); // Assuming 201 Created on success
     expect(res.body).toHaveProperty('status', 'success');
@@ -201,4 +205,65 @@ describe('Attachment Endpoints', () => {
   //   // Clear testAttachment after deletion
   //   testAttachment = null;
   // });
+
+  describe('POST /api/attachments/signed-url', () => {
+    it('should return a signed URL and file path on success', async () => {
+      const mockSignedUrlData = {
+        signedUrl: 'https://fake-supabase-url.com/upload-path?token=123',
+        filePath: 'receipts/1/test.png-1678886400000',
+      };
+      attachmentService.createUploadSignedUrl.mockResolvedValue(mockSignedUrlData);
+
+      const res = await request(app)
+        .post('/api/attachments/signed-url')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ fileName: 'test.png', fileType: 'image/png' });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.status).toBe('success');
+      expect(res.body.data).toEqual(mockSignedUrlData);
+      expect(attachmentService.createUploadSignedUrl).toHaveBeenCalledWith('test.png', 'image/png', testUser.userId);
+    });
+
+    it('should return 400 if fileName or fileType is missing', async () => {
+      const res = await request(app)
+        .post('/api/attachments/signed-url')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ fileName: 'test.png' }); // Missing fileType
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body.status).toBe('error');
+    });
+  });
+
+  describe('POST /api/attachments/process-receipt', () => {
+    it('should return extracted data from a processed receipt', async () => {
+      const mockExtractedData = {
+        merchantName: 'Test Store',
+        total: 12.99,
+      };
+      processReceiptWithAzure.mockResolvedValue(mockExtractedData);
+      const filePath = 'receipts/1/test.png-1678886400000';
+
+      const res = await request(app)
+        .post('/api/attachments/process-receipt')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ filePath });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.status).toBe('success');
+      expect(res.body.data).toEqual(mockExtractedData);
+      expect(processReceiptWithAzure).toHaveBeenCalledWith(filePath);
+    });
+
+    it('should return 400 if filePath is missing', async () => {
+      const res = await request(app)
+        .post('/api/attachments/process-receipt')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({}); // Missing filePath
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body.status).toBe('error');
+    });
+  });
 });

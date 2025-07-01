@@ -12,6 +12,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@azure/ai-form-recognizer": "^5.1.0",
+    "@azure/identity": "^4.10.1",
+    "@supabase/supabase-js": "^2.50.2",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
@@ -20,7 +23,8 @@
     "multer": "^2.0.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "pg": "^8.16.2"
+    "pg": "^8.16.2",
+    "pg-boss": "^10.3.2"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

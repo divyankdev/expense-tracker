@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 const dotenv = require('dotenv');
+const { createClient } = require('@supabase/supabase-js');
 
 dotenv.config();
 
@@ -14,16 +15,21 @@ const pool = new Pool({
 });
 
 async function query(sql, params) {
-    const client = await pool.connect();
-    try {
-        const result = await client.query(sql, params);
-        // console.log(result.rows)
-        return result;
-    } finally {
-        client.release();
-    }
+  const client = await pool.connect();
+  try {
+    const result = await client.query(sql, params);
+    // console.log(result.rows)
+    return result;
+  } finally {
+    client.release();
+  }
 }
 
+const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+console.log("URL:", supabaseAdmin.storage)
+
 module.exports = {
-    pool, query
+  pool,
+  query,
+  supabaseAdmin,
 };
