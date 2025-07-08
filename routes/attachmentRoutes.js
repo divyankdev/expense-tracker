@@ -21,6 +21,9 @@ const upload = multer({ storage });
 router.post('/signed-url', protect, attachmentController.getUploadSignedUrl);
 router.post('/process-receipt', protect, attachmentController.processReceipt);
 
+// Add receipt status polling route
+router.get('/receipt-status', attachmentController.receiptStatusByJobId);
+
 router.get('/', protect, attachmentController.getAllAttachments);
 router.get('/:id', protect, attachmentController.getAttachmentById);
 router.post('/:transaction_id', protect, upload.single('attachment'), attachmentController.createAttachment);

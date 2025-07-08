@@ -88,6 +88,23 @@ const attachmentController = {
     const { jobId } = await attachmentService.enqueueReceiptProcessing(filePath, req.user?.userId);
     responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, 'Receipt processing started.', { jobId, status: 'pending' });
   }),
+
+  receiptStatusByJobId: asyncHandler(async (req, res) => {
+    // Call the service method to get job status
+    const { jobId } = req.query;
+    if (!jobId) {
+      return responseHandler.sendError(res, HTTP_STATUS_CODES.BAD_REQUEST, 'jobId is required.');
+    }
+    try {
+      const status = await attachmentService.receiptStatusByJobId(jobId);
+      if (!status) {
+        return responseHandler.sendError(res, HTTP_STATUS_CODES.NOT_FOUND, 'Job not found.');
+      }
+      responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, 'Job status fetched successfully.', status);
+    } catch (error) {
+      responseHandler.sendError(res, HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR, error.message || 'Failed to fetch job status.');
+    }
+  }),
 };
 
 module.exports = attachmentController;

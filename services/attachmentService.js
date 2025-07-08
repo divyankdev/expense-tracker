@@ -71,49 +71,36 @@ const createUploadSignedUrl = async (fileName, fileType, userId) => {
   return { signedUrl: data.signedUrl, filePath, token: data.token };
 };
 
-const receiptStatusByJobId = async (req, res) => {
-  const { jobId } = req.query;
-
-  if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
+// Refactored: now takes jobId and returns status object
+const receiptStatusByJobId = async (jobId) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('scanned_documents')
       .select('*')
-      .eq('id', jobId)
+      .eq('job_id', jobId)
       .single();
 
     if (error || !data) {
-      return res.status(404).json({ message: 'Job not found' });
+      return null;
     }
 
-    res.status(200).json({
-      success: true,
-      data: {
-        jobId: data.id,
-        status: data.status,
-        extractedData: data.extracted_data,
-        error: data.error_message,
-        createdAt: data.created_at,
-        completedAt: data.completed_at
-      }
-    });
-
+    return {
+      jobId: data.job_id,
+      status: data.status,
+      extractedData: data.extracted_data,
+      error: data.error_message,
+      createdAt: data.created_at,
+      completedAt: data.completed_at
+    };
   } catch (error) {
-    console.error('Status check error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to check job status'
-    });
+    throw new Error('Failed to check job status');
   }
-}
+};
 
 const enqueueReceiptProcessing = async (filePath, userId) => {
   try {
     console.log('=== Creating queue and sending job ===');
-    
+
     // 1. Get the singleton boss instance
     const bossInstance = await startBoss();
     console.log('✅ Boss singleton ready');
@@ -170,7 +157,7 @@ const enqueueReceiptProcessing = async (filePath, userId) => {
     }, 1000);
 
     return { jobId, recordId: record.id };
-    
+
   } catch (error) {
     console.error('Error in enqueueReceiptProcessing:', error);
     throw error;

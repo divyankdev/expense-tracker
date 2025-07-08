@@ -107,6 +107,105 @@ async function processReceiptWithAzure(filePath) {
       documentId: receipt.docType || 'prebuilt-receipt'
     };
 
+    // const extractedData = {
+    //   "merchantName": null,
+    //   "merchantPhoneNumber": "+9111223344",
+    //   "merchantAddress": null,
+    //   "transactionDate": null,
+    //   "transactionTime": null,
+    //   "total": 16.5,
+    //   "subtotal": null,
+    //   "tax": null,
+    //   "tip": null,
+    //   "items": [
+    //     {
+    //       "index": 1,
+    //       "name": "Lorem",
+    //       "quantity": null,
+    //       "price": null,
+    //       "totalPrice": 1.1,
+    //       "category": null,
+    //       "unitOfMeasure": null,
+    //       "productCode": null,
+    //       "confidence": {
+    //         "name": 0.988,
+    //         "totalPrice": 0.988
+    //       }
+    //     },
+    //     {
+    //       "index": 2,
+    //       "name": "Ipsum",
+    //       "quantity": null,
+    //       "price": null,
+    //       "totalPrice": 2.2,
+    //       "category": null,
+    //       "unitOfMeasure": null,
+    //       "productCode": null,
+    //       "confidence": {
+    //         "name": 0.987,
+    //         "totalPrice": 0.988
+    //       }
+    //     },
+    //     {
+    //       "index": 3,
+    //       "name": "Dolor sit amet",
+    //       "quantity": null,
+    //       "price": null,
+    //       "totalPrice": 3.3,
+    //       "category": null,
+    //       "unitOfMeasure": null,
+    //       "productCode": null,
+    //       "confidence": {
+    //         "name": 0.985,
+    //         "totalPrice": 0.988
+    //       }
+    //     },
+    //     {
+    //       "index": 4,
+    //       "name": "Consectetur",
+    //       "quantity": null,
+    //       "price": null,
+    //       "totalPrice": 4.4,
+    //       "category": null,
+    //       "unitOfMeasure": null,
+    //       "productCode": null,
+    //       "confidence": {
+    //         "name": 0.988,
+    //         "totalPrice": 0.987
+    //       }
+    //     },
+    //     {
+    //       "index": 5,
+    //       "name": "Adipiscing elit",
+    //       "quantity": null,
+    //       "price": null,
+    //       "totalPrice": 5.5,
+    //       "category": null,
+    //       "unitOfMeasure": null,
+    //       "productCode": null,
+    //       "confidence": {
+    //         "name": 0.985,
+    //         "totalPrice": 0.987
+    //       }
+    //     }
+    //   ],
+    //   "itemSummary": {
+    //     "totalItems": 5,
+    //     "totalQuantity": 0,
+    //     "averageItemPrice": 0
+    //   },
+    //   "receiptType": null,
+    //   "confidence": {
+    //     "total": 0.978,
+    //     "merchantPhoneNumber": 0.987,
+    //     "merchantName": null,
+    //     "items": null
+    //   },
+    //   "processedAt": "2025-07-08T10:04:53.155Z",
+    //   "documentId": "receipt.retailMeal"
+    // }
+    
+
     // 6. Convert to JSON string if needed for storage
     const jsonData = JSON.stringify(extractedData, null, 2);
 
