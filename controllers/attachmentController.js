@@ -77,13 +77,14 @@ const attachmentController = {
 
   processReceipt: asyncHandler(async (req, res) => {
     const { filePath } = req.body;
-
+    console.log("Divyank11111111111111", filePath)
     if (!filePath) {
       return responseHandler.sendError(res, HTTP_STATUS_CODES.BAD_REQUEST, 'filePath is required.');
     }
 
     // Enqueue the job and return jobId and status
     // (Assume you have a service method to enqueue and return jobId)
+    console.log("Debugging")
     const { jobId } = await attachmentService.enqueueReceiptProcessing(filePath, req.user?.userId);
     responseHandler.sendSuccess(res, HTTP_STATUS_CODES.OK, 'Receipt processing started.', { jobId, status: 'pending' });
   }),

@@ -1,6 +1,4 @@
-// services/accountService.js
-
-const { query } = require('../utils/db'); // Import the query function from db.js
+const { query } = require('../utils/db'); 
 const { toCamelCase, toSnakeCase } = require('../utils/caseConverter');
 
 const accountService = {
@@ -27,7 +25,6 @@ const accountService = {
    */
   async getAccountById(accountId) {
     try {
-      // console.log(`Fetching account with ID: ${accountId}`);
       const sql = 'SELECT * FROM accounts WHERE account_id = $1';
       const values = [accountId];
       const { rows } = await query(sql, values);

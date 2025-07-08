@@ -2,9 +2,10 @@
 
 const { query, supabaseAdmin } = require('../utils/db');
 const { toCamelCase, toSnakeCase } = require('../utils/caseConverter');
-const { formatJobStatus } = require('../lib/jobStatus');
-const PgBoss = require('pg-boss');
-const { boss, JOBS } = require('../lib/queue');
+// const { boss } = require('../lib/queue')
+const { boss, JOBS, startBoss } = require('../lib/queue');
+// const { processReceiptWithAzure } = require('../services/azureReceiptProcessor');
+// const { supabaseAdmin } = require('../utils/db');
 
 // Get all attachments
 const getAllAttachments = async () => {
@@ -79,7 +80,7 @@ const receiptStatusByJobId = async (req, res) => {
 
   try {
     const { data, error } = await supabaseAdmin
-      .from('receipt_jobs')
+      .from('scanned_documents')
       .select('*')
       .eq('id', jobId)
       .single();
@@ -90,7 +91,14 @@ const receiptStatusByJobId = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: formatJobStatus(data)
+      data: {
+        jobId: data.id,
+        status: data.status,
+        extractedData: data.extracted_data,
+        error: data.error_message,
+        createdAt: data.created_at,
+        completedAt: data.completed_at
+      }
     });
 
   } catch (error) {
@@ -103,33 +111,73 @@ const receiptStatusByJobId = async (req, res) => {
 }
 
 const enqueueReceiptProcessing = async (filePath, userId) => {
-  // Enqueue the job
-  const jobId = await boss.send(JOBS.PROCESS_RECEIPT, {
-    filePath,
-    userId,
-    createdAt: new Date().toISOString()
-  });
+  try {
+    console.log('=== Creating queue and sending job ===');
+    
+    // 1. Get the singleton boss instance
+    const bossInstance = await startBoss();
+    console.log('✅ Boss singleton ready');
 
-  // Create a database record to track the job
-  const { data, error } = await supabaseAdmin
-    .from('receipt_jobs')
-    .insert({
-      id: jobId,
-      file_path: filePath,
-      status: 'pending',
-      user_id: userId,
-      created_at: new Date().toISOString()
-    })
-    .select()
-    .single();
+    // 2. Create the queue (if it doesn't exist)
+    try {
+      console.log('Creating queue for process-receipt...');
+      await bossInstance.createQueue('process-receipt', {
+        retryLimit: 3,
+        retryDelay: 60,
+        expireInMinutes: 60
+      });
+      console.log('Queue created successfully');
+    } catch (queueError) {
+      console.log('Queue creation result:', queueError.message);
+    }
 
-  if (error) {
-    throw new Error('Failed to create job record');
+    // 3. Send the job
+    console.log('Sending job to process-receipt queue...');
+    const jobData = {
+      filePath: String(filePath),
+      userId: String(userId),
+      createdAt: new Date().toISOString()
+    };
+
+    console.log('Job data:', jobData);
+    const jobId = await bossInstance.send('process-receipt', jobData);
+    console.log('Job sent successfully with ID:', jobId);
+
+    if (!jobId) {
+      throw new Error('Job ID is null after send');
+    }
+
+    // 4. Create tracking record
+    const sql = `
+      INSERT INTO scanned_documents (job_id, file_path, status, user_id, created_at)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `;
+    const values = [jobId, filePath, 'pending', userId, new Date().toISOString()];
+    const { rows } = await query(sql, values);
+
+    const record = rows[0];
+    console.log('Job record created successfully:', record);
+
+    // 5. Verify job was queued
+    setTimeout(async () => {
+      try {
+        const queueSize = await bossInstance.getQueueSize('process-receipt');
+        console.log(`📊 ENQUEUE: Queue size after job submission: ${queueSize}`);
+      } catch (err) {
+        console.error('❌ ENQUEUE: Error checking queue size:', err);
+      }
+    }, 1000);
+
+    return { jobId, recordId: record.id };
+    
+  } catch (error) {
+    console.error('Error in enqueueReceiptProcessing:', error);
+    throw error;
   }
-
-  return { jobId };
 };
 
+// module.exports = { enqueueReceiptProcessing };
 module.exports = {
   getAllAttachments,
   getAttachmentById,
